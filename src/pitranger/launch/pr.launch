@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="pitranger" type="node" name="pitranger" output="screen"/>
+</launch>
