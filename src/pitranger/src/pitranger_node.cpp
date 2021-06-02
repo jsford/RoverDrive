@@ -25,7 +25,6 @@ int main(int argc, char** argv) {
   auto wheel_cb = [&wheels, wheel_diam_m]
     (const pitranger::WheelVelocitiesConstPtr& msg) {
     try {
-      fmt::print("Hello!\n");
       wheels.set_left_rpm(msg->left_mps * 60.0 / wheel_diam_m);
       wheels.set_right_rpm(msg->right_mps * 60.0 / wheel_diam_m);
     } catch(const std::exception& e) {
@@ -48,7 +47,6 @@ int main(int argc, char** argv) {
   ros::Rate rate(10);
   unsigned long iter = 0;
   while( ros::ok() ) {
-
     // Compute wheel odometry and publish it.
     {
       const double fr_rpm = wheels.get_front_right_rpm();
