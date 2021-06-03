@@ -1,8 +1,8 @@
 #include "pr_utils/pr_ptu.h"
 #include "pr_utils/pr_wheel.h"
-#include <pitranger/WheelVelocities.h>
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Twist.h>
 
 double rpm_to_rad_per_sec(const double rpm) {
   return rpm * 2*M_PI / 60.0;
@@ -16,25 +16,32 @@ int main(int argc, char** argv) {
   const std::string wheel_odom_frame_id = "odom";
   const std::string wheel_odom_child_frame_id = "base_link";
   const double wheel_diam_m = 0.18;
-  const double wheel_spacing_m = 0.80;
+  const double wheel_spacing_m = 0.62;
 
   pr::WheelController wheels;
   pr::PanTiltController  ptu;
 
   // Attach a subscriber to set wheel velocities.
-  auto wheel_cb = [&wheels, wheel_diam_m]
-    (const pitranger::WheelVelocitiesConstPtr& msg) {
+  auto wheel_cb = [&wheels, wheel_diam_m, wheel_spacing_m]
+    (const geometry_msgs::TwistConstPtr& msg) {
     try {
-      wheels.set_left_rpm(msg->left_mps * 60.0 / wheel_diam_m);
-      wheels.set_right_rpm(msg->right_mps * 60.0 / wheel_diam_m);
+      double lin = msg->linear.x;
+      double ang = msg->angular.z;
+
+      double v_delta = std::tan(ang)*wheel_spacing_m;
+      double l_mps = lin - v_delta/2.0;
+      double r_mps = lin + v_delta/2.0;
+
+      wheels.set_left_rpm(l_mps * 60.0 / wheel_diam_m);
+      wheels.set_right_rpm(r_mps * 60.0 / wheel_diam_m);
     } catch(const std::exception& e) {
       fmt::print("WARN: pitranger node failed to set motor velocities.\n");
     }
   };
-  auto wheel_vel_sub = nh.subscribe<pitranger::WheelVelocities>("/pitranger/wheel_velocities", 10, wheel_cb);
+  auto wheel_vel_sub = nh.subscribe<geometry_msgs::Twist>("/pitranger/in/twist_cmd", 1, wheel_cb);
 
   // Create a publisher for the wheel odometry.
-  auto wheel_odom_pub = nh.advertise<nav_msgs::Odometry>("/pitranger/wheel_odom", 100);
+  auto wheel_odom_pub = nh.advertise<nav_msgs::Odometry>("/pitranger/out/wheel_odom", 100);
 
   // Track the robot state in x,y,yaw.
   double robot_x   = 0.0;
@@ -66,16 +73,22 @@ int main(int argc, char** argv) {
       // Get average velocity (m/s) of the left and ride sides of the robot.
       const double  v_left_mps = left_rps*(wheel_diam_m/(2*M_PI));
       const double v_right_mps = right_rps*(wheel_diam_m/(2*M_PI));
+      const double v_mps = (v_left_mps + v_right_mps) / 2.0;
 
       // Calculate velocity of robot in x,y,yaw.
-      const double vx = (v_left_mps + v_right_mps)/2.0 * std::cos(robot_yaw);
-      const double vy = (v_left_mps + v_right_mps)/2.0 * std::sin(robot_yaw);
+      const double vx = std::cos(robot_yaw) * v_mps;
+      const double vy = -1*std::sin(robot_yaw) * v_mps;
       const double vyaw = std::atan((v_right_mps-v_left_mps)/(wheel_spacing_m));
 
+      // Calculate displacement in x,y,yaw.
+      const double dx = vx*dt;
+      const double dy = vy*dt;
+      const double dyaw = vyaw*dt;
+
       // Update the robot state.
-      robot_x += vx*dt;
-      robot_y += vy*dt;
-      robot_yaw += vyaw*dt;
+      robot_x += std::cos(robot_yaw)*dx - std::sin(robot_yaw)*dy;
+      robot_y += std::sin(robot_yaw)*dx + std::cos(robot_yaw)*dy;
+      robot_yaw += dyaw;
 
       // Construct the wheel odometry message header.
       nav_msgs::Odometry msg;
@@ -94,28 +107,28 @@ int main(int argc, char** argv) {
       msg.pose.pose.orientation.z = std::sin(robot_yaw/2.0);
       msg.pose.pose.orientation.w = std::cos(robot_yaw/2.0);
 
-      msg.pose.covariance[0*6+0] = 0.01;       // X-to-X
-      msg.pose.covariance[1*6+1] = 0.01;       // Y-to-Y
+      msg.pose.covariance[0*6+0] = 0.3;        // X-to-X
+      msg.pose.covariance[1*6+1] = 0.3;        // Y-to-Y
       msg.pose.covariance[2*6+2] = 100000.0;   // Z-to-Z
       msg.pose.covariance[3*6+3] = 100000.0;   // Roll-to-Roll
       msg.pose.covariance[4*6+4] = 100000.0;   // Pitch-to-Pitch
-      msg.pose.covariance[5*6+5] = 0.03;       // Yaw-to-Yaw
+      msg.pose.covariance[5*6+5] = 10.0;       // Yaw-to-Yaw
 
       // Construct the wheel odometry message twist.
       msg.twist.twist.linear.x = vx;
-      msg.twist.twist.linear.y = vy;
+      msg.twist.twist.linear.y = 0.0;
       msg.twist.twist.linear.z = 0.0;
 
       msg.twist.twist.angular.x = 0.0;
       msg.twist.twist.angular.y = 0.0;
       msg.twist.twist.angular.z = vyaw;
 
-      msg.twist.covariance[0*6+0] = 0.01;       // X-to-X
-      msg.twist.covariance[1*6+1] = 0.01;       // Y-to-Y
+      msg.twist.covariance[0*6+0] = 0.1;        // X-to-X
+      msg.twist.covariance[1*6+1] = 100000.0;   // Y-to-Y
       msg.twist.covariance[2*6+2] = 100000.0;   // Z-to-Z
       msg.twist.covariance[3*6+3] = 100000.0;   // Roll-to-Roll
       msg.twist.covariance[4*6+4] = 100000.0;   // Pitch-to-Pitch
-      msg.twist.covariance[5*6+5] = 0.03;       // Yaw-to-Yaw
+      msg.twist.covariance[5*6+5] = 0.3;        // Yaw-to-Yaw
 
       wheel_odom_pub.publish(msg);
     }

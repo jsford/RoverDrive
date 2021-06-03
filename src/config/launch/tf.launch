@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+  <!-- base_link to rs_front_link -->
+  <!-- Note: The front realsense is rolled down 44.5 degrees. -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_rs_front_broadcaster" args="0.25 0 0.24 0 0.7679 0 base_link rs_front_link"/>
+
+  <!-- base_link to rs_back_link -->
+  <!-- Note: The back realsense is rolled down 42.5 degrees. -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_rs_back_broadcaster" args="-.25 0 .24 0.0 2.3998 3.1416 base_link rs_back_link"/>
+
+  <!-- base_link to imu_link -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_imu_broadcaster" args="0 0 .19 3.14156 0 0 base_link imu_link"/>
+
+  <!-- base_link to gps_link -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_gps_broadcaster" args="0 0 0.3 0 0 0 base_link gps_link"/>
+</launch>
