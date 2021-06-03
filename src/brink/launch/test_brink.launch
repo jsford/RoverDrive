@@ -1,0 +1,13 @@
+<launch>
+
+  <include file="$(find brink)/launch/brink.launch"/>
+
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+      <arg name="align_depth" value="true"/>
+      <arg name="linear_accel_cov" value="1.0"/>
+      <arg name="unite_imu_method" value="linear_interpolation"/>
+  </include>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_footprint_broadcaster" args="0.249 0.045 0.098 1.570796 0 -2.3038346 camera_link oriented_footprint"/> 
+
+</launch>

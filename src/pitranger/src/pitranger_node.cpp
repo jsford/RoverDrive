@@ -109,9 +109,9 @@ int main(int argc, char** argv) {
 
       msg.pose.covariance[0*6+0] = 0.3;        // X-to-X
       msg.pose.covariance[1*6+1] = 0.3;        // Y-to-Y
-      msg.pose.covariance[2*6+2] = 100000.0;   // Z-to-Z
-      msg.pose.covariance[3*6+3] = 100000.0;   // Roll-to-Roll
-      msg.pose.covariance[4*6+4] = 100000.0;   // Pitch-to-Pitch
+      msg.pose.covariance[2*6+2] = 1000.0;     // Z-to-Z
+      msg.pose.covariance[3*6+3] = 1000.0;     // Roll-to-Roll
+      msg.pose.covariance[4*6+4] = 1000.0;     // Pitch-to-Pitch
       msg.pose.covariance[5*6+5] = 10.0;       // Yaw-to-Yaw
 
       // Construct the wheel odometry message twist.
@@ -123,11 +123,11 @@ int main(int argc, char** argv) {
       msg.twist.twist.angular.y = 0.0;
       msg.twist.twist.angular.z = vyaw;
 
-      msg.twist.covariance[0*6+0] = 0.1;        // X-to-X
-      msg.twist.covariance[1*6+1] = 100000.0;   // Y-to-Y
-      msg.twist.covariance[2*6+2] = 100000.0;   // Z-to-Z
-      msg.twist.covariance[3*6+3] = 100000.0;   // Roll-to-Roll
-      msg.twist.covariance[4*6+4] = 100000.0;   // Pitch-to-Pitch
+      msg.twist.covariance[0*6+0] =   0.01;     // X-to-X
+      msg.twist.covariance[1*6+1] =   10.0;     // Y-to-Y
+      msg.twist.covariance[2*6+2] = 1000.0;     // Z-to-Z
+      msg.twist.covariance[3*6+3] = 1000.0;     // Roll-to-Roll
+      msg.twist.covariance[4*6+4] = 1000.0;     // Pitch-to-Pitch
       msg.twist.covariance[5*6+5] = 0.3;        // Yaw-to-Yaw
 
       wheel_odom_pub.publish(msg);

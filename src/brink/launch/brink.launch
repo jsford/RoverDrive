@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="brink" type="brink.py" name="brink" output="screen">
+    <remap from="/brink/in/points" to="/camera/depth/color/points"/>
+  </node>
+
+</launch>
