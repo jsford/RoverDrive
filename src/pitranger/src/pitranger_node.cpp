@@ -1,8 +1,8 @@
-#include "pr_utils/pr_ptu.h"
 #include "pr_utils/pr_wheel.h"
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
+#include <fmt/format.h>
 
 double rpm_to_rad_per_sec(const double rpm) {
   return rpm * 2*M_PI / 60.0;
@@ -19,7 +19,6 @@ int main(int argc, char** argv) {
   const double wheel_spacing_m = 0.62;
 
   pr::WheelController wheels;
-  pr::PanTiltController  ptu;
 
   // Attach a subscriber to set wheel velocities.
   auto wheel_cb = [&wheels, wheel_diam_m, wheel_spacing_m]

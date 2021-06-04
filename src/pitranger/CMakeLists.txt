@@ -7,7 +7,10 @@ add_compile_options(-std=c++14)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  geometry_msgs
   nav_msgs
+  tf2_ros
+  message_generation
 )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake" CACHE STRING "Modules for CMake" FORCE)
@@ -15,6 +18,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake" CAC
 ## System dependencies are found with CMake's conventions
 find_package(Spinnaker REQUIRED)
 find_package(fmt REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -47,11 +51,10 @@ add_message_files(
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  SetPanTilt.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -105,27 +108,41 @@ include_directories(
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(${PROJECT_NAME}_node
+add_executable(pitranger_node
   src/pitranger_node.cpp
   src/pr_utils/pr_wheel.cpp
+)
+
+## Declare a C++ executable
+add_executable(pitcam_node
+  src/pitcam_node.cpp
   src/pr_utils/pr_ptu.cpp
   src/pr_utils/pr_pitcam.cpp
 )
 
 ## Rename C++ executable without prefix
-set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+set_target_properties(pitranger_node PROPERTIES OUTPUT_NAME pitranger PREFIX "")
+set_target_properties(pitcam_node PROPERTIES OUTPUT_NAME pitcam PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(pitranger_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(pitcam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_subdirectory(libs/roboteq)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node
+target_link_libraries(pitranger_node
+  ${catkin_LIBRARIES}
+  roboteq
+  fmt
+  stdc++fs
+)
+target_link_libraries(pitcam_node
   ${catkin_LIBRARIES}
   ${Spinnaker_LIBRARIES}
   roboteq
   fmt
   stdc++fs
+  Eigen3::Eigen
 )

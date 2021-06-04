@@ -1,0 +1,5 @@
+int32 pan_deg
+int32 tilt_deg
+---
+int32 pan_deg
+int32 tilt_deg
