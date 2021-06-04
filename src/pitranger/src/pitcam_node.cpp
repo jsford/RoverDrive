@@ -1,6 +1,7 @@
 #include "pr_utils/pr_ptu.h"
 #include "pr_utils/pr_pitcam.h"
 #include "pitranger/SetPanTilt.h"
+#include "pitranger/PitCamCapture.h"
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -15,6 +16,7 @@ const double hinge_z = 0.320; // height of hinge above the ground.
 const double panel_length = 0.52; // hinge to camera length
 
 std::unique_ptr<pr::PanTiltController> ptu;
+std::unique_ptr<pr::PitCamera> pitcam;
 
 using Mat4d = Eigen::Matrix<double,4,4>;
 using Vec3d = Eigen::Vector3d;
@@ -80,16 +82,23 @@ Mat4d compute_pitcam_frame(double pan_deg, double tilt_deg) {
   double tilt = -1 * deg2rad(tilt_deg);
 
   Mat4d H = Mat4d::Identity();
+
+  // Translate to center of hinge axis.
   H = translate(H, Vec3d {hinge_x, 0.0, hinge_z});
+
+  // Tilt around world y axis.
   H = rotate(H, Vec3d {0.0, tilt, 0.0});
+
+  // Extend to top of solar panel.
   H = translate(H, Vec3d {panel_length*std::sin(tilt), 0.0, panel_length*std::cos(tilt)});
 
-  // Pan around local z axis. Ugh.
-  Vec3d t = H.block<3,1>(0,3);
-  H = translate(H, -t);
-  H = H * yaw2mat(pan);
-  H = translate(H, t);
-
+  // Pan around local z axis.
+  {
+    Vec3d t = H.block<3,1>(0,3);
+    H = translate(H, -t);
+    H = H * yaw2mat(pan);
+    H = translate(H, t);
+  }
   return H;
 }
 
@@ -100,23 +109,51 @@ bool set_pan_tilt(pitranger::SetPanTilt::Request &req, pitranger::SetPanTilt::Re
   res.pan_deg = ptu->get_pan_deg();
   res.tilt_deg = ptu->get_tilt_deg();
   return true;
-};
+}
+
+bool pitcam_capture(pitranger::PitCamCapture::Request &req, pitranger::PitCamCapture::Response &res) {
+  ptu->set_pan_deg(req.pan_deg);
+  ptu->set_tilt_deg(req.tilt_deg);
+
+  const int exposure = (req.exposure_us > 0) ? req.exposure_us : pitcam->get_autoexposure();
+  const auto img = pitcam->capture(exposure);
+
+  res.exposure_us = pitcam->get_exposure();
+  res.pan_deg     = ptu->get_pan_deg();
+  res.tilt_deg    = ptu->get_tilt_deg();
+
+  res.image.header.stamp = ros::Time::now();
+  res.image.header.frame_id = "pitcam_optical_frame";
+  res.image.encoding = "RGB8";
+
+  res.image.is_bigendian = false;
+  res.image.step = 3*img.cols;
+  res.image.data = img.data;
+
+  res.image.height = img.rows;
+  res.image.width  = img.cols;
+  return true;
+}
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "pitcam");
   ros::NodeHandle nh;
 
   ptu = std::make_unique<pr::PanTiltController>();
+  pitcam = std::make_unique<pr::PitCamera>();
   tf2_ros::TransformBroadcaster tf_broadcaster;
 
   // Attach a service to set the camera pan and tilt angles.
-  auto ptu_service = nh.advertiseService("/pitranger/set_pan_tilt", set_pan_tilt);
+  auto ptu_service = nh.advertiseService("/pitcam/set_pan_tilt", set_pan_tilt);
+
+  // Attach a service to capture images.
+  auto img_service = nh.advertiseService("/pitcam/capture", pitcam_capture);
 
   ros::Rate rate(10);
   unsigned long iter = 0;
   while( ros::ok() ) {
 
-    // Compute the pitcam coordinate frame and broadcast it.
+    // Compute the pitcam coordinate frames and broadcast them.
     {
       const double pitcam_pan  = ptu->get_pan_deg();
       const double pitcam_tilt = ptu->get_tilt_deg();
@@ -124,10 +161,10 @@ int main(int argc, char** argv) {
       geometry_msgs::TransformStamped tf_msg;
       tf_msg.header.stamp = ros::Time::now();
       tf_msg.header.frame_id = "base_link";
-      tf_msg.child_frame_id = "pitcam";
+      tf_msg.child_frame_id = "pitcam_frame";
 
-      const Mat4d H = compute_pitcam_frame(pitcam_pan, pitcam_tilt);
-      const Quatd q(H.block<3,3>(0,0));
+      Mat4d H = compute_pitcam_frame(pitcam_pan, pitcam_tilt);
+      Quatd q(H.block<3,3>(0,0));
 
       tf_msg.transform.translation.x = H(0,3);
       tf_msg.transform.translation.y = H(1,3);
@@ -138,6 +175,16 @@ int main(int argc, char** argv) {
       tf_msg.transform.rotation.z = q.z();
       tf_msg.transform.rotation.w = q.w();
 
+      tf_broadcaster.sendTransform(tf_msg);
+
+      // Publish the optical frame.
+      tf_msg.child_frame_id = "pitcam_optical_frame";
+      q = q * Eigen::AngleAxisd(-0.5*M_PI, Vec3d::UnitX());
+      q = q * Eigen::AngleAxisd(0.5*M_PI, Vec3d::UnitY());
+      tf_msg.transform.rotation.x = q.x();
+      tf_msg.transform.rotation.y = q.y();
+      tf_msg.transform.rotation.z = q.z();
+      tf_msg.transform.rotation.w = q.w();
       tf_broadcaster.sendTransform(tf_msg);
     }
 

@@ -1,0 +1,8 @@
+int8 pan_deg
+int8 tilt_deg
+int32 exposure_us
+---
+int8 pan_deg
+int8 tilt_deg
+int32 exposure_us
+sensor_msgs/Image image

@@ -8,6 +8,7 @@ add_compile_options(-std=c++14)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   geometry_msgs
+  sensor_msgs
   nav_msgs
   tf2_ros
   message_generation
@@ -54,6 +55,7 @@ add_message_files(
 add_service_files(
   FILES
   SetPanTilt.srv
+  PitCamCapture.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -67,6 +69,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs  # Or other packages containing msgs
+  sensor_msgs
 )
 
 ###################################

@@ -4,4 +4,4 @@ if [[ "$#" != 2 ]]; then
   exit 2
 fi
 
-rosservice call /pitranger/set_pan_tilt -- $1 $2
+rosservice call /pitcam/set_pan_tilt -- $1 $2
