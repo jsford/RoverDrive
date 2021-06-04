@@ -106,26 +106,10 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "pitcam");
   ros::NodeHandle nh;
 
-  // --------------------------------------
-  // Blocking services
-  // --------------------------------------
-  // ...set_pan_tilt(p,t)
-  // ...capture_image(exposure)
-  // ...capture_hdr_image(exposures) ... ?
-  //
-  // --------------------------------------
-  // Non-blocking actions
-  // --------------------------------------
-  //
-  // --------------------------------------
-  // Streaming topics
-  // --------------------------------------
-  // ...pitcam_pose
-  //
-
   ptu = std::make_unique<pr::PanTiltController>();
   tf2_ros::TransformBroadcaster tf_broadcaster;
 
+  // Attach a service to set the camera pan and tilt angles.
   auto ptu_service = nh.advertiseService("/pitranger/set_pan_tilt", set_pan_tilt);
 
   ros::Rate rate(10);
@@ -144,9 +128,6 @@ int main(int argc, char** argv) {
 
       const Mat4d H = compute_pitcam_frame(pitcam_pan, pitcam_tilt);
       const Quatd q(H.block<3,3>(0,0));
-
-      fmt::print("PAN: {}  TILT: {}\n", pitcam_pan, pitcam_tilt);
-      fmt::print("H:\n{}\n\n", H);
 
       tf_msg.transform.translation.x = H(0,3);
       tf_msg.transform.translation.y = H(1,3);
