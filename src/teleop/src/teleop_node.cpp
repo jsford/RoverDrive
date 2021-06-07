@@ -1,4 +1,5 @@
 #include "joystick/joystick.hh"
+#include "pitranger/SetPanTilt.h"
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <fmt/format.h>
@@ -12,6 +13,24 @@ const double turbo_gear0 = 1.0;
 const double turbo_gear1 = 2.0;
 const double turbo_gear2 = 3.0;
 double turbo_gear = turbo_gear0;
+
+// Mappings for the wired Nintendo Switch PowerA controller.
+const int BUTTON_A = 2;
+const int BUTTON_B = 1;
+const int BUTTON_X = 3;
+const int BUTTON_Y = 0;
+const int TRIGGER_ZL = 6;
+const int TRIGGER_ZR = 7;
+const int LEFT_JOY_X = 0;
+const int LEFT_JOY_Y = 1;
+const int RIGHT_JOY_X =  2;
+const int RIGHT_JOY_Y =  3;
+const int HOME_BUTTON = 12;
+const int CIRCLE_BUTTON = 13;
+const int PLUS_BUTTON =  9;
+const int MINUS_BUTTON =  8;
+const int DPAD_X = 4;
+const int DPAD_Y = 5;
 
 
 std::pair<double,double> joy2twist(double joy_x, double joy_y) {
@@ -52,6 +71,13 @@ std::pair<double,double> joy2twist(double joy_x, double joy_y) {
   return std::make_pair(lin, ang);
 }
 
+bool set_pan_tilt(ros::ServiceClient& client, int pan, int tilt) {
+  pitranger::SetPanTilt srv;
+  srv.request.pan_deg = pan;
+  srv.request.tilt_deg = tilt;
+  return client.call(srv);
+}
+
 int main(int argc, char** argv) {
   ros::init(argc, argv, "teleop");
   ros::NodeHandle nh;
@@ -70,6 +96,15 @@ int main(int argc, char** argv) {
   double joy_x = 0;
   double joy_y = 0;
   double speed_mps = max_speed_mps;
+
+  auto set_pan_tilt_client = nh.serviceClient<pitranger::SetPanTilt>("pitcam/set_pan_tilt");
+  set_pan_tilt_client.waitForExistence();
+
+  int  pan_idx = 4;
+  int tilt_idx = 5;
+  std::vector<int> pans {-60, -45, -30, -15, 0, 15, 30, 45, 60};
+  std::vector<int> tilts {-70, -60, -50, -40, -30, -20, -10, 0, 30, 60, 90};
+  set_pan_tilt(set_pan_tilt_client, pans[pan_idx], tilts[tilt_idx]);
 
   ros::Rate rate(30);
   while(ros::ok()) {
@@ -93,21 +128,31 @@ int main(int argc, char** argv) {
       if(event.isButton()) {
         //fmt::print("Button {} is {}.\n", event.number, event.value == 0 ? "up":"down");
         switch (event.number) {
-          case 6:
+          case TRIGGER_ZL:
             turbo_gear = event.value ? turbo_gear1 : turbo_gear0;
             break;
-          case 7:
+          case TRIGGER_ZR:
             turbo_gear = event.value ? turbo_gear2 : turbo_gear0;
             break;
         }
       } else if(event.isAxis()) {
         //fmt::print("Axis {} is {}.\n", event.number, event.value);
         switch (event.number) {
-          case 0: // Left Joystick X-Axis
+          case LEFT_JOY_X: // Left Joystick X-Axis
             joy_x = event.value / (double)JoystickEvent::MAX_AXES_VALUE;
             break;
-          case 1: // Left Joystick Y-Axis
+          case LEFT_JOY_Y: // Left Joystick Y-Axis
             joy_y = -1 * event.value / (double)JoystickEvent::MAX_AXES_VALUE;
+            break;
+          case DPAD_X:
+            if(event.value < 0) { pan_idx = std::max<int>(pan_idx-1, 0); }
+            else if(event.value > 0) { pan_idx = std::min<int>(pan_idx+1, pans.size()-1); }
+            set_pan_tilt(set_pan_tilt_client, pans[pan_idx], tilts[tilt_idx]);
+            break;
+          case DPAD_Y:
+            if(event.value < 0) { tilt_idx = std::max<int>(tilt_idx-1, 0); }
+            else if(event.value > 0) { tilt_idx = std::min<int>(tilt_idx+1, tilts.size()-1); }
+            set_pan_tilt(set_pan_tilt_client, pans[pan_idx], tilts[tilt_idx]);
             break;
         }
       }

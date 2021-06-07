@@ -3,13 +3,16 @@
 <launch>
 
   <!-- Launch the joystick teleop node. -->
-  <node name="teleop" pkg="teleop" type="node" output="screen"/>
+  <node name="teleop" pkg="teleop" type="teleop_node" output="screen"/>
 
   <!-- Launch the static transforms for the pitranger rover -->
   <include file="$(find config)/launch/tf.launch"/>
 
   <!-- Launch the IMU. -->
   <include file="$(find xsens_driver)/launch/xsens.launch"/>
+
+  <!-- Launch the GPS -->
+  <include file="$(find swiftnav_ros)/launch/swiftnav_ros.launch"/>
 
   <!-- Launch the localization EKFs. -->
   <include file="$(find robot_localization)/launch/dual_ekf_navsat.launch"/>
