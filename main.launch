@@ -12,10 +12,10 @@
   <include file="$(find xsens_driver)/launch/xsens.launch"/>
 
   <!-- Launch the GPS -->
-  <include file="$(find swiftnav_ros)/launch/swiftnav_ros.launch"/>
+  <!--include file="$(find swiftnav_ros)/launch/swiftnav_ros.launch"/-->
 
   <!-- Launch the localization EKFs. -->
-  <include file="$(find robot_localization)/launch/dual_ekf_navsat.launch"/>
+  <!--include file="$(find robot_localization)/launch/dual_ekf_navsat.launch"/-->
 
   <!-- Launch pitranger, the motor control node. -->
   <node name="pitranger" pkg="pitranger" type="pitranger" output="screen">
@@ -28,7 +28,7 @@
   </node>
 
   <!-- Launch the realsenses. -->
-  <include file="$(find config)/launch/rs.launch"/>
+  <!--include file="$(find config)/launch/rs.launch"/-->
 
   <!-- Launch brinkmanship! -->
   <!--node pkg="brink" type="brink.py" name="brink" output="screen" respawn="true">

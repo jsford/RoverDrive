@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
 
   // Attach a service to set the camera pan and tilt angles.
   auto ptu_service = nh.advertiseService("/pitcam/set_pan_tilt", set_pan_tilt);
-
+  
   // Attach a service to capture images.
   auto img_service = nh.advertiseService("/pitcam/capture", pitcam_capture);
 

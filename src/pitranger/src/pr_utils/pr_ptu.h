@@ -5,7 +5,7 @@
 
 namespace pr {
 
-constexpr char PTU_SERIAL_PORT[] = "/dev/ttyTHS2";
+constexpr char PTU_SERIAL_PORT[] = "/dev/ttyTHS0";
 
 // Tilt Axis Configuration
 constexpr int PTU_TILT_ENCODER_ANALOG_INPUT      = 1;
