@@ -95,7 +95,7 @@ int PitCamera::get_autoexposure() {
     // image captures to get the camera to reliably change exposures.
     int last_exposure = -1;
     fmt::print("INIT EXPOSURE: {}\n", get_exposure());
-    for(int i=0; i<20; ++i) {
+    for(int i=0; i<10; ++i) {
         capture(0);
         int exposure = get_exposure();
         fmt::print("EXPOSURE: {}\n", exposure);

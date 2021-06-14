@@ -59,6 +59,7 @@ int main(int argc, char** argv) {
       const double fl_rpm = wheels.get_front_left_rpm();
       const double rr_rpm = wheels.get_rear_right_rpm();
       const double rl_rpm = wheels.get_rear_left_rpm();
+
       const double  left_rpm = 0.5*(fl_rpm + rl_rpm);
       const double right_rpm = 0.5*(fr_rpm + rr_rpm);
       const double  left_rps = left_rpm * 2.0*M_PI/60.0;
@@ -76,7 +77,7 @@ int main(int argc, char** argv) {
 
       // Calculate velocity of robot in x,y,yaw.
       const double vx = std::cos(robot_yaw) * v_mps;
-      const double vy = -1*std::sin(robot_yaw) * v_mps;
+      const double vy = std::sin(robot_yaw) * v_mps;
       const double vyaw = std::atan((v_right_mps-v_left_mps)/(wheel_spacing_m));
 
       // Calculate displacement in x,y,yaw.
@@ -85,9 +86,12 @@ int main(int argc, char** argv) {
       const double dyaw = vyaw*dt;
 
       // Update the robot state.
-      robot_x += std::cos(robot_yaw)*dx - std::sin(robot_yaw)*dy;
-      robot_y += std::sin(robot_yaw)*dx + std::cos(robot_yaw)*dy;
+      robot_x += dx;
+      robot_y += dy;
       robot_yaw += dyaw;
+
+      fmt::print("UPDATE: X:{} Y:{} YAW:{}\n", dx, dy, dyaw);
+      fmt::print("STATE: X:{} Y:{} YAW:{}\n", robot_x, robot_y, robot_yaw);
 
       // Construct the wheel odometry message header.
       nav_msgs::Odometry msg;
