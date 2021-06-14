@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(realsense2_camera)
 add_compile_options(-std=c++11)
 
-option(BUILD_WITH_OPENMP "Use OpenMP" OFF)
+option(BUILD_WITH_OPENMP "Use OpenMP" ON)
 option(SET_USER_BREAK_AT_STARTUP "Set user wait point in startup (for debug)" OFF)
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)

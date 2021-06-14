@@ -3,7 +3,7 @@
   <group ns="rs_front">
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
       <arg name="serial_no"             value="939622074873"/>
-      <arg name="tf_prefix"         		value="rs_front"/>
+      <arg name="tf_prefix"         	value="rs_front"/>
       <arg name="align_depth"           value="true"/>
       <arg name="ordered_pc"            value="true"/>
       <arg name="linear_accel_cov"      value="1.0"/>

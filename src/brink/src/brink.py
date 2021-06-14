@@ -185,7 +185,10 @@ class Brinkmanship:
             rd = 10*np.array([np.sin(angle*np.pi/180.0),np.cos(angle*np.pi/180.0)])
             line = LineString([(ro[0]-rd[0], ro[1]-rd[1]), (ro[0]+rd[0], ro[1]+rd[1])])
             int_line = concave_hull.intersection(line)
-            lines.append(int_line.coords)
+            try:
+                lines.append(int_line.coords)
+            except:
+                pass
 
         lines_msg = Marker()
         lines_msg.header = msg.header
@@ -209,27 +212,27 @@ class Brinkmanship:
             lines_msg.points.append(p1)
         lines_pub.publish(lines_msg)
 
-        # Publish the estimated range to a brink.
-        dists = [np.linalg.norm(np.array([l[0][0]-l[1][0],l[0][1]-l[1][1]])) for l in lines]
-        a,b = np.partition(dists, 1)[0:2]
-        brink_range = (a+b)/2.0
-        if brink_range > 0.8 * 1.0:
-            brink_range = -1.0
-        range_pub.publish(brink_range)
+        try:
+          # Publish the estimated range to a brink.
+          dists = [np.linalg.norm(np.array([l[0][0]-l[1][0],l[0][1]-l[1][1]])) for l in lines]
+          brink_range = np.min(dists)
+          range_pub.publish(brink_range)
 
-        # Put 2d alpha shape back in the camera_frame and publish it as a polygon.
-        hull_msg = PolygonStamped()
-        hull_msg.header = msg.header
-        hull_msg.header.frame_id = camera_frame_id
+          # Put 2d alpha shape back in the camera_frame and publish it as a polygon.
+          hull_msg = PolygonStamped()
+          hull_msg.header = msg.header
+          hull_msg.header.frame_id = camera_frame_id
 
-        xs = concave_hull.exterior.coords.xy[0]
-        ys = concave_hull.exterior.coords.xy[1]
-        for x,y in zip(xs,ys):
-            xyz = np.array([x,y,0]).transpose()
-            xyz = xyz.dot(inv_basis)
-            xyz += orig
-            hull_msg.polygon.points.append(Point32(xyz[0], xyz[1], xyz[2]))
-        hull_pub.publish(hull_msg)
+          xs = concave_hull.exterior.coords.xy[0]
+          ys = concave_hull.exterior.coords.xy[1]
+          for x,y in zip(xs,ys):
+              xyz = np.array([x,y,0]).transpose()
+              xyz = xyz.dot(inv_basis)
+              xyz += orig
+              hull_msg.polygon.points.append(Point32(xyz[0], xyz[1], xyz[2]))
+          hull_pub.publish(hull_msg)
+        except:
+            pass
 
 
 

@@ -1,9 +1,13 @@
 #include "joystick/joystick.hh"
 #include "pitranger/SetPanTilt.h"
+#include "pitranger/PitCamCapture.h"
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <fmt/format.h>
 #include <string>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 constexpr double max_speed_mps   = 0.05;
 constexpr double max_yaw_rps     = 0.1;
@@ -25,10 +29,10 @@ const int LEFT_JOY_X = 0;
 const int LEFT_JOY_Y = 1;
 const int RIGHT_JOY_X =  2;
 const int RIGHT_JOY_Y =  3;
-const int HOME_BUTTON = 12;
-const int CIRCLE_BUTTON = 13;
-const int PLUS_BUTTON =  9;
-const int MINUS_BUTTON =  8;
+const int BUTTON_HOME = 12;
+const int BUTTON_CIRCLE = 13;
+const int BUTTON_PLUS =  9;
+const int BUTTON_MINUS =  8;
 const int DPAD_X = 4;
 const int DPAD_Y = 5;
 
@@ -78,6 +82,20 @@ bool set_pan_tilt(ros::ServiceClient& client, int pan, int tilt) {
   return client.call(srv);
 }
 
+pitranger::PitCamCapture::Response pitcam_capture(ros::ServiceClient& client) {
+  pitranger::PitCamCapture srv;
+  srv.request.exposure_us = 67041; // Use autoexposure.
+  client.call(srv);
+  return srv.response;
+}
+
+void save_png(pitranger::PitCamCapture::Response& resp) {
+  static int count = 0;
+  std::string fname = fmt::format("teleop-{}_{}_{}_{}.jpg", count++, resp.exposure_us, resp.pan_deg, resp.tilt_deg);
+  stbi_write_jpg(fname.c_str(), resp.image.width, resp.image.height, 3, resp.image.data.data(), 80);
+  fmt::print("Teleop: Image saved as {}\n", fname);
+}
+
 int main(int argc, char** argv) {
   ros::init(argc, argv, "teleop");
   ros::NodeHandle nh;
@@ -99,6 +117,9 @@ int main(int argc, char** argv) {
 
   auto set_pan_tilt_client = nh.serviceClient<pitranger::SetPanTilt>("pitcam/set_pan_tilt");
   set_pan_tilt_client.waitForExistence();
+  
+  auto capture_client = nh.serviceClient<pitranger::PitCamCapture>("pitcam/capture");
+  capture_client.waitForExistence();
 
   int  pan_idx = 4;
   int tilt_idx = 5;
@@ -134,6 +155,13 @@ int main(int argc, char** argv) {
           case TRIGGER_ZR:
             turbo_gear = event.value ? turbo_gear2 : turbo_gear0;
             break;
+	  case BUTTON_HOME:
+	    if(event.value) {
+              auto img = pitcam_capture(capture_client);
+              fmt::print("Received image with dimensions {}x{}\n", img.image.width, img.image.height);
+              save_png(img);
+	    }
+	    break;
         }
       } else if(event.isAxis()) {
         //fmt::print("Axis {} is {}.\n", event.number, event.value);

@@ -112,9 +112,6 @@ bool set_pan_tilt(pitranger::SetPanTilt::Request &req, pitranger::SetPanTilt::Re
 }
 
 bool pitcam_capture(pitranger::PitCamCapture::Request &req, pitranger::PitCamCapture::Response &res) {
-  ptu->set_pan_deg(req.pan_deg);
-  ptu->set_tilt_deg(req.tilt_deg);
-
   const int exposure = (req.exposure_us > 0) ? req.exposure_us : pitcam->get_autoexposure();
   const auto img = pitcam->capture(exposure);
 

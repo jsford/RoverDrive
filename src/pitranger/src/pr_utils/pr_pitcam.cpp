@@ -16,7 +16,7 @@ const float   PITCAM_WHITE_BALANCE_BLUE_RATIO =     1.83f;
 const float   PITCAM_WHITE_BALANCE_RED_RATIO  =     1.40f;
 const float   PITCAM_GAIN                     =      9.0f;
 const float   PITCAM_GAMMA                    =  1.0/1.8f;
-const int64_t PITCAM_DEVICE_LINK_THROUGHPUT_LIMIT_MBPS = 100000000;
+const int64_t PITCAM_DEVICE_LINK_THROUGHPUT_LIMIT_MBPS = 10000000;
 
 PitCamera::PitCamera() {
 
