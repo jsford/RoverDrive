@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: swiftnav_ros
-Description: Description of swiftnav_ros
-Version: 0.0.1
-Cflags: -I${prefix}/include
-Libs: -L${prefix}/lib -lsbp_device -lswiftnav_ros_driver
-Requires: diagnostic_updater roscpp sensor_msgs std_srvs
