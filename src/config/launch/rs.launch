@@ -5,7 +5,7 @@
       <arg name="serial_no"             value="939622074873"/>
       <arg name="tf_prefix"         	value="rs_front"/>
       <arg name="align_depth"           value="true"/>
-      <arg name="ordered_pc"            value="true"/>
+      <arg name="ordered_pc"            value="false"/>
       <arg name="linear_accel_cov"      value="1.0"/>
 
       <arg name="enable_gyro"           value="false"/>
@@ -19,11 +19,11 @@
       <arg name="color_fps"             value="10"/>
     </include>
 
-    <node name="$(anon dynparam)" pkg="dynamic_reconfigure" type="dynparam" args="set_from_parameters /rs_front/camera/rgb_camera">
+    <!--node name="$(anon dynparam)" pkg="dynamic_reconfigure" type="dynparam" args="set_from_parameters /rs_front/camera/rgb_camera">
       <param name="enable_auto_exposure" type="bool" value="true"/>
       <param name="enable_auto_white_balance" type="bool" value="false"/>
       <param name="white_balance" type="double" value="4400.0"/>
-    </node>
+    </node-->
 
   </group>
 
@@ -32,7 +32,7 @@
       <arg name="serial_no"             value="841612070485"/>
       <arg name="tf_prefix"         		value="rs_back"/>
       <arg name="align_depth"           value="true"/>
-      <arg name="ordered_pc"            value="true"/>
+      <arg name="ordered_pc"            value="false"/>
       <arg name="linear_accel_cov"      value="1.0"/>
 
       <arg name="enable_gyro"           value="false"/>
@@ -46,11 +46,11 @@
       <arg name="color_fps"             value="10"/>
     </include>
 
-    <node name="$(anon dynparam)" pkg="dynamic_reconfigure" type="dynparam" args="set_from_parameters /rs_back/camera/rgb_camera">
+    <!--node name="$(anon dynparam)" pkg="dynamic_reconfigure" type="dynparam" args="set_from_parameters /rs_back/camera/rgb_camera">
       <param name="enable_auto_exposure" type="bool" value="true"/>
       <param name="enable_auto_white_balance" type="bool" value="false"/>
-      <param name="white_balance" type="double" value="5600.0"/>
-    </node>
+      <param name="white_balance" type="double" value="4400.0"/>
+    </node-->
 
   </group>
 

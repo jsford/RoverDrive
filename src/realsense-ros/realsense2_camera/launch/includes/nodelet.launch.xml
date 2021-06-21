@@ -107,8 +107,8 @@
   
 
 
-  <node unless="$(arg external_manager)" pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="$(arg output)" required="$(arg required)"/>
-  <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)" required="$(arg required)">
+  <node unless="$(arg external_manager)" pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="$(arg output)" required="$(arg required)" respawn="true"/>
+  <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)" required="$(arg required)" respawn="true">
     <param name="serial_no"                type="str"  value="$(arg serial_no)"/>
     <param name="usb_port_id"              type="str"  value="$(arg usb_port_id)"/>
     <param name="device_type"              type="str"  value="$(arg device_type)"/>

@@ -90,9 +90,6 @@ int main(int argc, char** argv) {
       robot_y += dy;
       robot_yaw += dyaw;
 
-      fmt::print("UPDATE: X:{} Y:{} YAW:{}\n", dx, dy, dyaw);
-      fmt::print("STATE: X:{} Y:{} YAW:{}\n", robot_x, robot_y, robot_yaw);
-
       // Construct the wheel odometry message header.
       nav_msgs::Odometry msg;
       msg.header.seq = iter++;

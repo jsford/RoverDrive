@@ -261,10 +261,11 @@ namespace swiftnav_ros
         nav_msgs::OdometryPtr rtk_odom_msg( new nav_msgs::Odometry );
 
         rtk_odom_msg->header.frame_id = driver->frame_id;
-            // For best accuracy, header.stamp should maybe get tow converted to ros::Time
+
+        // For best accuracy, header.stamp should maybe get tow converted to ros::Time
         rtk_odom_msg->header.stamp = ros::Time::now( );
 
-            // convert to meters from mm, and NED to ENU
+        // convert to meters from mm, and NED to ENU
         rtk_odom_msg->pose.pose.position.x = sbp_ned.e/1000.0;
         rtk_odom_msg->pose.pose.position.y = sbp_ned.n/1000.0;
         rtk_odom_msg->pose.pose.position.z = -sbp_ned.d/1000.0;
@@ -282,7 +283,7 @@ namespace swiftnav_ros
         // Pose x/y/z covariance 
         rtk_odom_msg->pose.covariance[0]  = h_covariance;   // x = 0, 0 in the 6x6 cov matrix
         rtk_odom_msg->pose.covariance[7]  = h_covariance;   // y = 1, 1
-        rtk_odom_msg->pose.covariance[14] = v_covariance;  // z = 2, 2
+        rtk_odom_msg->pose.covariance[14] = v_covariance;   // z = 2, 2
 
         // default angular pose to unknown
         rtk_odom_msg->pose.covariance[21] = 1.0e3;  // x rotation = 3, 3
