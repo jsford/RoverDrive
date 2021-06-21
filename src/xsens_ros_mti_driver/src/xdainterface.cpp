@@ -86,7 +86,7 @@ void XdaInterface::spinFor(std::chrono::milliseconds timeout)
 
 void XdaInterface::registerPublishers(ros::NodeHandle &node)
 {
-	bool should_publish;
+	bool should_publish = false;
 
 	if (ros::param::get("~pub_imu", should_publish) && should_publish)
 	{

@@ -57,7 +57,7 @@ struct TransformPublisher : public PacketCallback
             XsQuaternion q = packet.orientationQuaternion();
 
             tf.header.stamp = timestamp;
-            tf.header.frame_id = "map";
+            tf.header.frame_id = "world";
             tf.child_frame_id = frame_id;
             tf.transform.translation.x = 0.0;
             tf.transform.translation.y = 0.0;
