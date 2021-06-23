@@ -19,7 +19,7 @@
 
   <arg name="confidence_width"    default="-1"/>
   <arg name="confidence_height"   default="-1"/>
-  <arg name="enable_confidence"   default="true"/>
+  <arg name="enable_confidence"   default="false"/>
   <arg name="confidence_fps"      default="-1"/>
 
   <arg name="infra_width"         default="848"/>
@@ -41,7 +41,7 @@
   <arg name="accel_fps"           default="-1"/>
   <arg name="enable_gyro"         default="false"/>
   <arg name="enable_accel"        default="false"/>
-  <arg name="enable_pose"        default="false"/>
+  <arg name="enable_pose"         default="false"/>
 
   <arg name="enable_pointcloud"         default="true"/>
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>

@@ -60,10 +60,10 @@ int main(int argc, char** argv) {
       const double rr_rpm = wheels.get_rear_right_rpm();
       const double rl_rpm = wheels.get_rear_left_rpm();
 
-      const double  left_rpm = 0.5*(fl_rpm + rl_rpm);
-      const double right_rpm = 0.5*(fr_rpm + rr_rpm);
-      const double  left_rps = left_rpm * 2.0*M_PI/60.0;
-      const double right_rps = right_rpm * 2.0*M_PI/60.0;
+      const double  left_rpm = (fl_rpm + rl_rpm)/2.0;
+      const double right_rpm = (fr_rpm + rr_rpm)/2.0;
+      const double  left_rps =  left_rpm * 2.0*M_PI/60.0;  // Convert rpm to rad/sec
+      const double right_rps = right_rpm * 2.0*M_PI/60.0;  // Convert rpm to rad/sec
 
       // Get elapsed time since previous iteration.
       curr_iter_time = ros::WallTime::now();
@@ -71,14 +71,15 @@ int main(int argc, char** argv) {
       prev_iter_time = curr_iter_time;
 
       // Get average velocity (m/s) of the left and ride sides of the robot.
-      const double  v_left_mps = left_rps*(wheel_diam_m/(2*M_PI));
-      const double v_right_mps = right_rps*(wheel_diam_m/(2*M_PI));
+      const double wheel_radius_m = wheel_diam_m / 2.0;
+      const double  v_left_mps =  left_rps*wheel_radius_m;
+      const double v_right_mps = right_rps*wheel_radius_m;
       const double v_mps = (v_left_mps + v_right_mps) / 2.0;
 
       // Calculate velocity of robot in x,y,yaw.
       const double vx = std::cos(robot_yaw) * v_mps;
       const double vy = std::sin(robot_yaw) * v_mps;
-      const double vyaw = std::atan((v_right_mps-v_left_mps)/(wheel_spacing_m));
+      const double vyaw = std::atan((v_right_mps-v_left_mps)/wheel_spacing_m);
 
       // Calculate displacement in x,y,yaw.
       const double dx = vx*dt;
@@ -86,8 +87,8 @@ int main(int argc, char** argv) {
       const double dyaw = vyaw*dt;
 
       // Update the robot state.
-      robot_x += dx;
-      robot_y += dy;
+      robot_x   += dx;
+      robot_y   += dy;
       robot_yaw += dyaw;
 
       // Construct the wheel odometry message header.
@@ -115,13 +116,14 @@ int main(int argc, char** argv) {
       msg.pose.covariance[5*6+5] = 10.0;       // Yaw-to-Yaw
 
       // Construct the wheel odometry message twist.
-      msg.twist.twist.linear.x = vx;
-      msg.twist.twist.linear.y = 0.0;
-      msg.twist.twist.linear.z = 0.0;
+      // Velocities are in the robot local frame.
+      msg.twist.twist.linear.x = v_mps;   // Average forward speed.
+      msg.twist.twist.linear.y = 0.0;     // We can't move sideways.
+      msg.twist.twist.linear.z = 0.0;     // We can't jump!
 
-      msg.twist.twist.angular.x = 0.0;
-      msg.twist.twist.angular.y = 0.0;
-      msg.twist.twist.angular.z = vyaw;
+      msg.twist.twist.angular.x = 0.0;    // We can't measure roll here.
+      msg.twist.twist.angular.y = 0.0;    // We can't measure pitch here.
+      msg.twist.twist.angular.z = vyaw;   // We can yaw around the robot center!
 
       msg.twist.covariance[0*6+0] =   0.01;     // X-to-X
       msg.twist.covariance[1*6+1] =   10.0;     // Y-to-Y

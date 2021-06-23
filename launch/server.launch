@@ -9,18 +9,18 @@
   <include file="$(find config)/launch/tf.launch"/>
 
   <!-- Launch the IMU. -->
-  <include file="$(find xsens_driver)/launch/xsens.launch"/>
+  <include file="$(find xsens_mti_driver)/launch/xsens_mti_node.launch"/>
 
   <!-- Launch the GPS -->
   <include file="$(find swiftnav_ros)/launch/swiftnav_ros.launch"/>
-
-  <!-- Launch the localization EKFs. -->
-  <include file="$(find robot_localization)/launch/dual_ekf_navsat.launch"/>
 
   <!-- Launch pitranger, the motor control node. -->
   <node name="pitranger" pkg="pitranger" type="pitranger" output="screen">
     <remap from="/pitranger/in/twist_cmd" to="teleop/out/twist_cmd"/>
   </node>
+
+  <!-- Launch the localization EKFs. -->
+  <include file="$(find robot_localization)/launch/dual_ekf_navsat.launch"/>
 
   <!-- Launch pitcam. -->
   <node name="pitcam" pkg="pitranger" type="pitcam" output="screen" respawn="true">
@@ -43,7 +43,7 @@
   <!-- Rosbag record -->
   <group if="$(arg bag)">
     <node pkg="rosbag" type="record" name="rosbag_record" output="log"
-      args="record -o /home/pitranger/Bags/ -a"/>
+      args="record --lz4 -o /home/pitranger/Bags/ -a"/>
   </group>
 
 </launch>
