@@ -73,7 +73,7 @@ ekf_se_odom:
 
 ekf_se_map:
   frequency: 10
-  sensor_timeout: 0.1
+  sensor_timeout: 0.2
   two_d_mode: true
   transform_time_offset: 0.0
   transform_timeout: 0.0
@@ -86,33 +86,33 @@ ekf_se_map:
   world_frame: map
 
   odom0: /pitranger/out/wheel_odom
-  odom0_config: [false, false, false,
-                 false, false, false,
-                 true,  true,  true,
-                 false, false, true,
-                 false, false, false]
+  odom0_config: [false, false, false,  # X, Y, Z
+                 false, false, false,  # R, P, Y
+                 true,  true,  false,  # Vx, Vy, Vz
+                 false, false, true,   # Vr, Vp, Vy
+                 false, false, false]  # Ax, Ay, Az
   odom0_queue_size: 10
   odom0_nodelay: true
   odom0_differential: false
   odom0_relative: false
 
-  odom1: /gps/rtkfix
-  odom1_config: [true,  true,  false,
-                 false, false, false,
-                 false, false, false,
-                 false, false, false,
-                 false, false, false]
+  odom1: /odometry/gps
+  odom1_config: [true,  true,  false,  # X, Y, Z
+                 false, false, false,  # R, P, Y
+                 false, false, false,  # Vx, Vy, Vz
+                 false, false, false,  # Vr, Vp, Vy
+                 false, false, false]  # Ax, Ay, Az
   odom1_queue_size: 10
   odom1_nodelay: true
   odom1_differential: false
   odom1_relative: false
 
   imu0: /imu/data
-  imu0_config: [false, false, false,
-                true,  true,  false,
-                false, false, false,
-                true,  true,  true,
-                true,  true,  true]
+  imu0_config: [false, false, false,  # X, Y, Z
+                true,  true,  true,   # R, P, Y
+                false, false, false,  # Vx, Vy, Vz
+                true,  true,  true,   # Vr, Vp, Vy
+                false,  false,  false]   # Ax, Ay, Az
   imu0_nodelay: true
   imu0_differential: false
   imu0_relative: false
@@ -159,7 +159,7 @@ navsat_transform:
   #magnetic_declination_radians: -0.1614430  # ( -9.25 deg) Pittsburgh
   #magnetic_declination_radians: -0.1942551  # (+11.13 deg) Delta, Utah
   magnetic_declination_radians: 0.0  # ( 0.0 deg) Use mtmanager to set this on the IMU.
-  yaw_offset: 1.5707963267948966  # IMU reads 0 facing north
+  yaw_offset: 0.0  # IMU reads 0 facing north
   zero_altitude: true
   broadcast_cartesian_transform: true
   publish_filtered_gps: true
