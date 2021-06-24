@@ -156,12 +156,12 @@ ekf_se_map:
 navsat_transform:
   frequency: 10
   delay: 3.0
-  magnetic_declination_radians: -0.1614430  # ( -9.25 deg) Pittsburgh
+  #magnetic_declination_radians: -0.1614430  # ( -9.25 deg) Pittsburgh
   #magnetic_declination_radians: -0.1942551  # (+11.13 deg) Delta, Utah
-  #yaw_offset: 1.570796327  # IMU reads 0 facing magnetic north, not east
-  yaw_offset: 0.0  # IMU reads 0 facing magnetic east
+  magnetic_declination_radians: 0.0  # ( 0.0 deg) Use mtmanager to set this on the IMU.
+  yaw_offset: 1.5707963267948966  # IMU reads 0 facing north
   zero_altitude: true
   broadcast_cartesian_transform: true
   publish_filtered_gps: true
-  use_odometry_yaw: true
-  wait_for_datum: true
+  use_odometry_yaw: false
+  wait_for_datum: false

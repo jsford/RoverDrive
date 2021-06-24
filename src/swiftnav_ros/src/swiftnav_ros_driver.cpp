@@ -268,7 +268,9 @@ namespace swiftnav_ros
         // convert to meters from mm, and NED to ENU
         rtk_odom_msg->pose.pose.position.x = sbp_ned.e/1000.0;
         rtk_odom_msg->pose.pose.position.y = sbp_ned.n/1000.0;
-        rtk_odom_msg->pose.pose.position.z = -sbp_ned.d/1000.0;
+        // NOTE(Jordan): Zeroing shitty z-axis pose.
+        rtk_odom_msg->pose.pose.position.z = 0.0;
+        // rtk_odom_msg->pose.pose.position.z = -sbp_ned.d/1000.0;
 
         // Set orientation to 0; GPS doesn't provide orientation
         rtk_odom_msg->pose.pose.orientation.x = 0;
@@ -303,7 +305,7 @@ namespace swiftnav_ros
         // set up the Twist covariance matrix
         // FIXME: I don't know what the covariance of linear velocity should be.
         // 12/19 asked on swiftnav google group
-        // GPS doesn't provide rotationl velocity
+        // GPS doesn't provide rotational velocity
         rtk_odom_msg->twist.covariance[0]  = driver->rtk_vel_h_covariance;   // x velocity = 0, 0 in the 6x6 cov matrix
         rtk_odom_msg->twist.covariance[7]  = driver->rtk_vel_h_covariance;   // y velocity = 1, 1
         rtk_odom_msg->twist.covariance[14] = driver->rtk_vel_v_covariance;   // z velocity = 2, 2
