@@ -4,3 +4,6 @@ devel/*
 *.swo
 *.pyc
 __pycache__/*
+*.so
+*.a
+*.o
