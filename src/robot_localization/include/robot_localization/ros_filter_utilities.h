@@ -83,7 +83,7 @@ bool lookupTransformSafe(const tf2_ros::Buffer &buffer,
                          const ros::Time &time,
                          const ros::Duration &timeout,
                          tf2::Transform &targetFrameTrans,
-                         const bool silent = false);
+                         const bool silent = true);
 
 //! @brief Method for safely obtaining transforms.
 //! @param[in] buffer - tf buffer object to use for looking up the transform
