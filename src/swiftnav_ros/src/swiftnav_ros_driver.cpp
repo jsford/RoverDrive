@@ -262,7 +262,7 @@ namespace swiftnav_ros
 
         rtk_odom_msg->header.frame_id = driver->frame_id;
 
-        // For best accuracy, header.stamp should maybe get tow converted to ros::Time
+        // For best accuracy, header.stamp should maybe be converted to ros::Time
         rtk_odom_msg->header.stamp = ros::Time::now( );
 
         // convert to meters from mm, and NED to ENU
@@ -313,14 +313,14 @@ namespace swiftnav_ros
         rtk_odom_msg->twist.covariance[28] = 1.0e3;  // y rotational velocity = 4, 4
         rtk_odom_msg->twist.covariance[35] = 1.0e3;  // z rotational velocity = 5, 5
 
-      driver->rtk_pub.publish( rtk_odom_msg );
+        driver->rtk_pub.publish( rtk_odom_msg );
 
-          driver->num_rtk_satellites = sbp_ned.n_sats;
-      driver->rtk_north = rtk_odom_msg->pose.pose.position.x;
-      driver->rtk_east = rtk_odom_msg->pose.pose.position.y;
-          driver->rtk_height = rtk_odom_msg->pose.pose.position.z;
-          driver->rtk_h_accuracy = sbp_ned.h_accuracy / 1000.0;
-          driver->rtk_v_accuracy = sbp_ned.v_accuracy / 1000.0;
+        driver->num_rtk_satellites = sbp_ned.n_sats;
+        driver->rtk_north = rtk_odom_msg->pose.pose.position.x;
+        driver->rtk_east = rtk_odom_msg->pose.pose.position.y;
+        driver->rtk_height = rtk_odom_msg->pose.pose.position.z;
+        driver->rtk_h_accuracy = sbp_ned.h_accuracy / 1000.0;
+        driver->rtk_v_accuracy = sbp_ned.v_accuracy / 1000.0;
     }
 		return;
 	}

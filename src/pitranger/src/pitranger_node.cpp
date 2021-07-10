@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
   unsigned long iter = 0;
   while( ros::ok() ) {
     // Compute wheel odometry and publish it.
-    {
+    try {
       const double fr_rpm = wheels.get_front_right_rpm();
       const double fl_rpm = wheels.get_front_left_rpm();
       const double rr_rpm = wheels.get_rear_right_rpm();
@@ -133,6 +133,8 @@ int main(int argc, char** argv) {
       msg.twist.covariance[5*6+5] = 0.3;        // Yaw-to-Yaw
 
       wheel_odom_pub.publish(msg);
+    } catch (const std::exception& e) {
+      fmt::print("WARNING: {}", e.what());
     }
 
     ros::spinOnce();

@@ -4,15 +4,15 @@
 ##  - nothing: the driver scans for devices and selects the first found.
 # device_id: '077007EF' # uppercase hex string
 port: '/dev/xsens'
-baudrate: 115200 # non necessary for some devices
+baudrate: 38400 # not necessary for some devices
 
 ## Log file (optional), placed in ~/.ros/ otherwise use absolute path
-# log_file: log.mtb
+log_file: log.mtb
 
 publisher_queue_size: 10 
 
 # TF transform frame_id (default: imu_link), you may want to change it if you use multiple devices
-frame_id: "imu_link"
+frame_id: 'imu_link'
 
 # Message publishers
 pub_imu: true
@@ -25,12 +25,12 @@ pub_dq: true
 pub_dv: true
 pub_sampletime: true
 pub_temperature: true
-pub_pressure: true
-pub_gnss: true
+pub_pressure: false
+pub_gnss: false 
 pub_twist: true
 pub_transform: false
-pub_positionLLA: true
-pub_velocity: true
+pub_positionLLA: false
+pub_velocity: false
 
 
 ## Sensor standard deviation [x,y,z] (optional)

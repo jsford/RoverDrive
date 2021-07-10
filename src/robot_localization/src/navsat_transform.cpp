@@ -60,7 +60,7 @@ namespace RobotLocalization
     magnetic_declination_(0.0),
     yaw_offset_(0.0),
     base_link_frame_id_("base_link"),
-    gps_frame_id_(""),
+    gps_frame_id_("gps"),
     utm_zone_(""),
     world_frame_id_("odom"),
     transform_timeout_(ros::Duration(0)),
@@ -213,6 +213,8 @@ namespace RobotLocalization
       nav_msgs::Odometry gps_odom;
       if (prepareGpsOdometry(gps_odom))
       {
+        // NOTE(Jordan): Set child frame id manually b/c I can't find the right way to set it.
+        gps_odom.child_frame_id = "base_link";
         gps_odom_pub_.publish(gps_odom);
       }
 

@@ -15,7 +15,7 @@
   <include file="$(find swiftnav_ros)/launch/swiftnav_ros.launch"/>
 
   <!-- Launch pitranger, the motor control node. -->
-  <node name="pitranger" pkg="pitranger" type="pitranger" output="screen">
+  <node name="pitranger" pkg="pitranger" type="pitranger" respawn="true" output="screen">
     <remap from="/pitranger/in/twist_cmd" to="teleop/out/twist_cmd"/>
   </node>
 
