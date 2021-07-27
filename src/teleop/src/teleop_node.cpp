@@ -184,15 +184,16 @@ int main(int argc, char** argv) {
             break;
         }
       }
+
+      double lin, ang;
+      std::tie(lin, ang) = joy2twist(joy_x, joy_y);
+
+      auto msg = geometry_msgs::Twist();
+      msg.linear.x = lin;
+      msg.angular.z = ang;
+      twist_pub.publish(msg);
+
     }
-
-    double lin, ang;
-    std::tie(lin, ang) = joy2twist(joy_x, joy_y);
-
-    auto msg = geometry_msgs::Twist();
-    msg.linear.x = lin;
-    msg.angular.z = ang;
-    twist_pub.publish(msg);
 
     ros::spinOnce();
     rate.sleep();
