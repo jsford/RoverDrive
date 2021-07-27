@@ -268,6 +268,7 @@ int RoboteqDevice::Connect(string port)
 
 	return RQ_SUCCESS;
 }
+
 void RoboteqDevice::Disconnect()
 {
 	if (IsConnected())

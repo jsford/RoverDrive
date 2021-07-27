@@ -245,7 +245,7 @@ int WheelController::get_front_right_encoder() {
   int pos = 0;
   int status = right.GetValue(_F, WHEELS_RIGHT_FRONT_CHANNEL, pos);
   if (status != RQ_SUCCESS) {
-    auto msg = fmt::format("Failed to get front right wheel encoder value.");
+    auto msg = fmt::format("Failed to get front right wheel encoder value.\n");
     throw std::runtime_error(msg);
   }
   return pos;
@@ -254,7 +254,7 @@ int WheelController::get_front_left_encoder() {
   int pos;
   int status = left.GetValue(_F, WHEELS_LEFT_FRONT_CHANNEL, pos);
   if (status != RQ_SUCCESS) {
-    auto msg = fmt::format("Failed to get front left wheel encoder value.");
+    auto msg = fmt::format("Failed to get front left wheel encoder value.\n");
     throw std::runtime_error(msg);
   }
   return pos;
@@ -263,7 +263,7 @@ int WheelController::get_rear_right_encoder() {
   int pos;
   int status = right.GetValue(_F, WHEELS_RIGHT_REAR_CHANNEL, pos);
   if (status != RQ_SUCCESS) {
-    auto msg = fmt::format("Failed to get rear right wheel encoder value.");
+    auto msg = fmt::format("Failed to get rear right wheel encoder value.\n");
     throw std::runtime_error(msg);
   }
   return pos;
@@ -272,7 +272,7 @@ int WheelController::get_rear_left_encoder() {
   int pos;
   int status = left.GetValue(_F, WHEELS_LEFT_REAR_CHANNEL, pos);
   if (status != RQ_SUCCESS) {
-    auto msg = fmt::format("Failed to get rear left wheel encoder value.");
+    auto msg = fmt::format("Failed to get rear left wheel encoder value.\n");
     throw std::runtime_error(msg);
   }
   return pos;
@@ -282,7 +282,7 @@ double WheelController::get_front_right_amps() {
   int tenth_amps;
   int status = right.GetValue(_MOTAMPS, WHEELS_RIGHT_FRONT_CHANNEL, tenth_amps);
   if (status != RQ_SUCCESS) {
-    auto msg = fmt::format("Failed to get front right wheel encoder value.");
+    auto msg = fmt::format("Failed to get front right current draw.\n");
     throw std::runtime_error(msg);
   }
   return tenth_amps/10.0;
@@ -292,7 +292,7 @@ double WheelController::get_front_left_amps() {
   int tenth_amps;
   int status = left.GetValue(_MOTAMPS, WHEELS_LEFT_FRONT_CHANNEL, tenth_amps);
   if (status != RQ_SUCCESS) {
-    auto msg = fmt::format("Failed to get front left wheel encoder value.");
+    auto msg = fmt::format("Failed to get front left current draw.\n");
     throw std::runtime_error(msg);
   }
   return tenth_amps/10.0;
@@ -302,7 +302,7 @@ double WheelController::get_rear_right_amps() {
   int tenth_amps;
   int status = right.GetValue(_MOTAMPS, WHEELS_RIGHT_REAR_CHANNEL, tenth_amps);
   if (status != RQ_SUCCESS) {
-    auto msg = fmt::format("Failed to get rear right wheel encoder value.");
+    auto msg = fmt::format("Failed to get rear right current draw.\n");
     throw std::runtime_error(msg);
   }
   return tenth_amps/10.0;
@@ -312,7 +312,7 @@ double WheelController::get_rear_left_amps() {
   int tenth_amps;
   int status = left.GetValue(_MOTAMPS, WHEELS_LEFT_REAR_CHANNEL, tenth_amps);
   if (status != RQ_SUCCESS) {
-    auto msg = fmt::format("Failed to get rear left wheel encoder value.");
+    auto msg = fmt::format("Failed to get rear left current draw.\n");
     throw std::runtime_error(msg);
   }
   return tenth_amps/10.0;

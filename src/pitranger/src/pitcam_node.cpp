@@ -136,14 +136,14 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "pitcam");
   ros::NodeHandle nh;
 
-  ptu = std::make_unique<pr::PanTiltController>();
-  pitcam = std::make_unique<pr::PitCamera>();
   tf2_ros::TransformBroadcaster tf_broadcaster;
 
   // Attach a service to set the camera pan and tilt angles.
+  ptu = std::make_unique<pr::PanTiltController>();
   auto ptu_service = nh.advertiseService("/pitcam/set_pan_tilt", set_pan_tilt);
   
   // Attach a service to capture images.
+  pitcam = std::make_unique<pr::PitCamera>();
   auto img_service = nh.advertiseService("/pitcam/capture", pitcam_capture);
 
   ros::Rate rate(10);
