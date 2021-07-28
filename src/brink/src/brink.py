@@ -20,6 +20,7 @@ poly_pub = rospy.Publisher('/brink/out/poly', PolygonStamped, queue_size=10)
 hull_pub = rospy.Publisher('/brink/out/hull', PolygonStamped, queue_size=10)
 lines_pub = rospy.Publisher('/brink/out/lines', Marker, queue_size=10)
 range_pub = rospy.Publisher('/brink/out/range', Float64, queue_size=10)
+range_text_pub = rospy.Publisher('/brink/out/range_text', Marker, queue_size=10)
 
 class tfSource:
     def __init__(self):
@@ -37,13 +38,12 @@ class tfSource:
 
 
 class Brinkmanship:
-    def __init__(self, odom_frame_id):
+    def __init__(self, odom_frame_id, filter_size=[0.05, 0.05, 0.05]):
         self.tf_source = tfSource()
         self.odom_frame_id = odom_frame_id
-        self.filter_size = [0.05, 0.05, 0.05]
+        self.filter_size = filter_size
 
-    def set_filter_size(self, x,y,z):
-        self.filter_size = [x,y,z]
+        self.cloud_sub = rospy.Subscriber('/brink/in/cloud', PointCloud2, self.cloud_handler)
 
     def msg2np(self, msg):
         pc = ros_numpy.numpify(msg)
@@ -131,9 +131,14 @@ class Brinkmanship:
         seg.set_method_type(pcl.SAC_RANSAC)
         seg.set_max_iterations(100)
         seg.set_distance_threshold(0.15)
-        indices, model = seg.segment()
 
-        model = np.array(model)
+        try:
+          indices, model = seg.segment()
+          model = np.array(model)
+        except:
+          print("Brinkmanship: Failed to segment model.")
+          return
+
         if( model[2] > 0.0 ):
             model *= -1
 
@@ -217,6 +222,29 @@ class Brinkmanship:
           dists = [np.linalg.norm(np.array([l[0][0]-l[1][0],l[0][1]-l[1][1]])) for l in lines]
           brink_range = np.min(dists)
           range_pub.publish(brink_range)
+          
+          # Publish a string version of the estimated range to a brink (for rviz).
+          range_text_msg = Marker()
+          range_text_msg.header.frame_id = "base_link"
+          range_text_msg.type = 9
+
+          # Normally white.
+          range_text_msg.color.r = 1.0;
+          range_text_msg.color.g = 1.0;
+          range_text_msg.color.b = 1.0;
+          range_text_msg.color.a = 1.0;
+      
+          # Yellow if getting worried. Red if way too close!
+          if brink_range < 0.2:
+            range_text_msg.color.g = 0.0;
+            range_text_msg.color.b = 0.0;
+          elif brink_range < 0.5:
+            range_text_msg.color.b = 0.0
+
+          range_text_msg.scale.z = 0.25;
+          range_text_msg.pose.position.z = 1.5;
+          range_text_msg.text = "BRINK: {:03f} m".format(brink_range)
+          range_text_pub.publish(range_text_msg)
 
           # Put 2d alpha shape back in the camera_frame and publish it as a polygon.
           hull_msg = PolygonStamped()
@@ -239,9 +267,6 @@ class Brinkmanship:
 if __name__=="__main__":
     rospy.init_node('brink')
 
-    brink = Brinkmanship(odom_frame_id='odom')
-    brink.set_filter_size(0.05, 0.05, 0.05)
-
-    rospy.Subscriber('/brink/in/cloud', PointCloud2, brink.cloud_handler)
+    brink = Brinkmanship(odom_frame_id='odom', filter_size=[0.1,0.1,0.1])
 
     rospy.spin()

@@ -95,7 +95,7 @@ if __name__=="__main__":
 
   rate = rospy.Rate(30)
 
-  odom_sub = rospy.Subscriber('odometry/filtered/global', Odometry, odometry_callback)
+  odom_sub = rospy.Subscriber('/whereami/odom', Odometry, odometry_callback)
   twist_pub = rospy.Publisher('/teleop/out/twist_cmd', Twist, queue_size=10)
 
   # Drive a square
@@ -153,7 +153,11 @@ if __name__=="__main__":
     Pose(0.0, 0.0, EAST, 1.0, deg2rad(1)),
   ]
 
-  waypoints = rot_points
+  shit_points = [
+    Pose(3.0, 1,0, NORTH),
+    Pose(1.0, 1.0, WEST)
+  ]
+  waypoints = shit_points
 
   waypoint_idx = 0
   while not rospy.is_shutdown() and waypoint_idx < len(waypoints):

@@ -93,7 +93,7 @@ class WhereAmINode:
     self.yaw += 0.01* (msg.angular_velocity.z - self.gyro_bias)
     self.yaw = wrapTo2Pi(self.yaw) 
     self.pos = np.mean(np.array(self.gps_fifo)[-5:], axis=0)
-    print("POSE: ({}, {}) {}".format(self.pos[0], self.pos[1], self.yaw*180./np.pi))
+    #print("POSE: ({}, {}) {}".format(self.pos[0], self.pos[1], self.yaw*180./np.pi))
 
     # Send the robot pose as an odometry message.
     odom_msg = Odometry()

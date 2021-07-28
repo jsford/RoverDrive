@@ -1,0 +1,13 @@
+# To run a mission, do this:
+#  roslaunch launch/server.launch
+#  rosrun goto goto_node.py mission:=~/mission.pr
+
+EXP 1600, 2400, 3200, 6400, 9300
+PAN -60, -45, -30, -15, 0, 15, 30, 45, 60
+TILT 0, 10, 20, 30, 40, 50, 60, 70
+
+REL  1.0, 0.0,  90.0,  BRINK_ON
+GOTO 1.0, 1.0,   0.0,  BRINK_ON
+REL  4.0, 0.0,  90.0, BRINK_OFF
+REL -4.0, 0.0, 270.0, BRINK_OFF
+CAPTURE
