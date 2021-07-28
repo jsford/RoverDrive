@@ -45,7 +45,7 @@ struct AccelerationPublisher : public PacketCallback
     {
         int pub_queue_size = 5;
         ros::param::get("~publisher_queue_size", pub_queue_size);
-        pub = node.advertise<geometry_msgs::Vector3Stamped>("imu/acceleration", pub_queue_size);
+        pub = node.advertise<geometry_msgs::Vector3Stamped>("xsens/acceleration", pub_queue_size);
         ros::param::get("~frame_id", frame_id);
     }
 

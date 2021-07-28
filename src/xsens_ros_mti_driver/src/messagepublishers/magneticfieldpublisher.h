@@ -47,7 +47,7 @@ struct MagneticFieldPublisher : public PacketCallback
     {
         int pub_queue_size = 5;
         ros::param::get("~publisher_queue_size", pub_queue_size);
-        pub = node.advertise<geometry_msgs::Vector3Stamped>("imu/mag", pub_queue_size);
+        pub = node.advertise<geometry_msgs::Vector3Stamped>("xsens/mag", pub_queue_size);
         // variance_from_stddev_param("~magnetic_field_stddev", magnetic_field_variance);
         ros::param::get("~frame_id", frame_id);
     }

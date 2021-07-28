@@ -10,7 +10,7 @@
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_rs_back_broadcaster" args="-.25 0 .24 0.0 2.3998 3.1416 base_link rs_back_link"/>
 
   <!-- base_link to imu_link -->
-  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_imu_broadcaster" args="0 0 .19 3.1416 0 0 base_link imu_link"/>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_imu_broadcaster" args="-0.10 0 .3 3.1416 0 0 base_link imu_link"/>
 
   <!-- base_link to gps -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_gps_broadcaster" args="0 0 0.3 0 0 0 base_link gps"/>

@@ -71,7 +71,7 @@ struct ImuPublisher : public PacketCallback
     {
         int pub_queue_size = 5;
         ros::param::get("~publisher_queue_size", pub_queue_size);
-        pub = node.advertise<sensor_msgs::Imu>("imu/data", pub_queue_size);
+        pub = node.advertise<sensor_msgs::Imu>("xsens/data", pub_queue_size);
         ros::param::get("~frame_id", frame_id);
 
         // REP 145: Conventions for IMU Sensor Drivers (http://www.ros.org/reps/rep-0145.html)

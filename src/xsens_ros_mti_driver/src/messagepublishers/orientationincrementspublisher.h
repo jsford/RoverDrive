@@ -46,7 +46,7 @@ struct OrientationIncrementsPublisher : public PacketCallback
     {
         int pub_queue_size = 5;
         ros::param::get("~publisher_queue_size", pub_queue_size);
-        pub = node.advertise<geometry_msgs::QuaternionStamped>("imu/dq", pub_queue_size);
+        pub = node.advertise<geometry_msgs::QuaternionStamped>("xsens/dq", pub_queue_size);
         ros::param::get("~frame_id", frame_id);
     }
 

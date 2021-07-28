@@ -87,6 +87,9 @@ int PitCamera::get_autoexposure() {
     // Save current exposure so we can restore it later.
     int original_exposure = get_exposure();
 
+    // Start with something reasonable.
+    set_exposure(15000);
+
     // Enable auto exposure and capture images to allow it to converge.
     use_autoexposure();
 
@@ -100,6 +103,11 @@ int PitCamera::get_autoexposure() {
         int exposure = get_exposure();
         fmt::print("EXPOSURE: {}\n", exposure);
         if(last_exposure > 0 && std::abs(exposure-last_exposure) < 0.05*exposure) {
+          break;
+        }
+        // Quit trying when it's super dark outside.
+        // NOTE(Jordan): This is a hack so I can work at night.
+        if( exposure > 2e6 ) {
           break;
         }
         last_exposure = exposure;

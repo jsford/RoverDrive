@@ -46,7 +46,7 @@ struct AngularVelocityPublisher : public PacketCallback
     {
         int pub_queue_size = 5;
         ros::param::get("~publisher_queue_size", pub_queue_size);
-        pub = node.advertise<geometry_msgs::Vector3Stamped>("imu/angular_velocity", pub_queue_size);
+        pub = node.advertise<geometry_msgs::Vector3Stamped>("xsens/angular_velocity", pub_queue_size);
         ros::param::get("~frame_id", frame_id);
     }
 
