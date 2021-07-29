@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <launch>
+
+  <!-- Record a bag file! -->
+  <arg name="bag" default="false"/>
+  <arg name="name" default="utah_"/>
+
   <!-- Launch the static transforms for the pitranger rover -->
   <include file="$(find config)/launch/tf.launch"/>
 
@@ -31,5 +36,10 @@
     <remap from="/brink/in/cloud" to="/rs_front/camera/depth/color/points"/>
   </node>
 
+  <!-- Rosbag record -->
+  <group if="$(arg bag)">
+    <node pkg="rosbag" type="record" name="rosbag_record" output="log"
+      args="record --lz4 -o /home/pitranger/Bags/$(arg name) -a"/>
+  </group>
 
 </launch>
