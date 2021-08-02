@@ -84,7 +84,7 @@ bool set_pan_tilt(ros::ServiceClient& client, int pan, int tilt) {
 
 pitranger::PitCamCapture::Response pitcam_capture(ros::ServiceClient& client) {
   pitranger::PitCamCapture srv;
-  srv.request.exposure_us = 67041; // Use autoexposure.
+  srv.request.exposure_us = 0; // Use autoexposure.
   client.call(srv);
   return srv.response;
 }
