@@ -115,38 +115,39 @@ class RobotExecutive:
     return None
 
   def capture(self):
+    pans = self.image_pans
     for t in self.image_tilts:
-      for p in self.image_pans:
+      # Loop over exposure bracket
+      for e in self.image_exposures:
+        for p in pans:
 
-        # Aim the camera and wait for it to stabilize.
-        self._set_pan_tilt(p, t)
-        time.sleep(1.0)
-
-        # Loop over exposure bracket
-        for e in self.image_exposures:
-
-          # Quit if ros is dead.
+          # Check if ros is dead.
           if rospy.is_shutdown():
             return 
 
+          # Aim the camera and wait for it to stabilize.
+          self._set_pan_tilt(p, t)
+          time.sleep(1.0)
+
           # Capture an image!
           img_data = self._capture_image(e)
-          print("PAN {} TILT {} EXP {}".format(img_data.pan_deg, img_data.tilt_deg, img_data.exposure_us))
+
           if img_data.image.encoding != "RGB8":
             print("GOTO ERROR: Pitcam image encoding {} not recognized!".format(img_data.image.encoding))
           else:
             img = Image.frombytes('RGB', (img_data.image.width,img_data.image.height), img_data.image.data, 'raw')
-            img_name = "{:03}_{:+03}_{:+03}_{:09}.jpg".format(self.capture_idx, p, t, e)
+            img_name = "v{:03}_t{:+03}_p{:+03}_e{:09}.jpg".format(self.capture_idx, t, p, e)
             img_path = osp.join(self.image_path, img_name)
-            print(img_path)
+            print(img_name)
             
             # Write metadata into exif
-            exif_dict = {"0th":zeroth_ifd, "Exif":exif_ifd, "GPS":gps_ifd, "1st":first_ifd, "thumbnail":thumbnail}
-            exif_bytes = piexif.dump(exif_dict)
-            exif_bytes = []
+            #exif_dict = {"0th":zeroth_ifd, "Exif":exif_ifd, "GPS":gps_ifd, "1st":first_ifd, "thumbnail":thumbnail}
+            #exif_bytes = piexif.dump(exif_dict)
+            #exif_bytes = []
 
             # Save image as jpg with exif
-            img.save(img_path, exif=exif_bytes)
+            #img.save(img_path, exif=exif_bytes)
+            img.save(img_path)
 
     # Return the camera to its default position.
     self._set_pan_tilt(self.default_pan, self.default_tilt)

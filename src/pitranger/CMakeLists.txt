@@ -98,6 +98,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${Spinnaker_INCLUDE_DIRS}
   src/
+  libs/stb/
 )
 
 ## Declare a C++ library
@@ -116,6 +117,15 @@ add_executable(pitranger_node
   src/pr_utils/pr_wheel.cpp
 )
 
+add_subdirectory(libs/roboteq)
+
+add_executable(pitcam_util
+  src/pitcam_util.cpp
+  src/pr_utils/pr_pitcam.cpp
+  src/pr_utils/pr_ptu.cpp
+)
+target_link_libraries(pitcam_util roboteq fmt ${Spinnaker_LIBRARIES})
+
 ## Declare a C++ executable
 add_executable(pitcam_node
   src/pitcam_node.cpp
@@ -131,8 +141,6 @@ set_target_properties(pitcam_node PROPERTIES OUTPUT_NAME pitcam PREFIX "")
 ## same as for the library above
 add_dependencies(pitranger_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(pitcam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-add_subdirectory(libs/roboteq)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(pitranger_node

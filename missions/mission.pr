@@ -3,10 +3,10 @@
 #  rosrun goto goto_node.py _mission:='~/RoverDrive/missions/<mission-file>.pr'
 
 # Configure the PitCam
-IMG_PATH "~/Images/mission_day_1_number_1/"
-EXP 1600, 2400, 3200, 6400, 9300
-PAN -60, -45, -30, -15, 0, 15, 30, 45, 60
-TILT 0, -10, -20, -30, -40, -50, -60, -70
+IMG_PATH "~/Images/mission_day_1_number_2/"
+EXP 12500, 25000, 50000, 100000, 200000
+PAN -45, -30, -15, 0, 15, 30, 45
+TILT -10, -20, -30, -40, -50, -60, -70
 
 DEFAULT_PAN   0
 DEFAULT_TILT -20

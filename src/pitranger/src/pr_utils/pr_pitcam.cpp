@@ -1,6 +1,7 @@
 #include "pr_utils/pr_pitcam.h"
 #include "pr_utils/pr_log.h"
 #include "pr_utils/pr_math.h"
+#include "pr_utils/pr_time.h"
 #include "Spinnaker.h"
 #include "SpinGenApi/SpinnakerGenApi.h"
 #include <fmt/format.h>
@@ -16,7 +17,7 @@ const float   PITCAM_WHITE_BALANCE_BLUE_RATIO =     1.83f;
 const float   PITCAM_WHITE_BALANCE_RED_RATIO  =     1.40f;
 const float   PITCAM_GAIN                     =      9.0f;
 const float   PITCAM_GAMMA                    =  1.0/1.8f;
-const int64_t PITCAM_DEVICE_LINK_THROUGHPUT_LIMIT_MBPS = 10000000;
+const int64_t PITCAM_DEVICE_LINK_THROUGHPUT_LIMIT_BPS = 12500000;
 
 PitCamera::PitCamera() {
 
@@ -35,7 +36,7 @@ PitCamera::PitCamera() {
     pCam->Init();
 
     // Set device link throughput.
-    set_device_link_throughput(PITCAM_DEVICE_LINK_THROUGHPUT_LIMIT_MBPS);
+    set_device_link_throughput(PITCAM_DEVICE_LINK_THROUGHPUT_LIMIT_BPS);
 
     // Tell the camera to use jumbo packets.
     use_jumbo_packets();
@@ -47,13 +48,59 @@ PitCamera::PitCamera() {
     set_white_balance();
 
     // Set the initial exposure to the autoexposure value.
-    set_exposure(get_autoexposure());
+    //set_exposure(get_autoexposure());
+    set_exposure(15000);
 
     // Set gamma correction.
     set_gamma(PITCAM_GAMMA);
+
+    // Start acquiring images!
+    start_acquisition();
+}
+
+void PitCamera::start_acquisition() {
+  if( !acquiring ) {
+      // Put the camera into continuous acquisition mode.
+      {
+        // Retrieve the GenICam nodemap.
+        auto &nodeMap = pCam->GetNodeMap();
+
+        // Retrieve enumeration node from nodemap
+        CEnumerationPtr ptrAcquisitionMode = nodeMap.GetNode("AcquisitionMode");
+        if (!IsAvailable(ptrAcquisitionMode) || !IsWritable(ptrAcquisitionMode))
+        {
+            throw std::runtime_error("Unable to set acquisition mode to 'continuous'. Aborting...");
+        }
+
+        // Retrieve entry node from enumeration node
+        CEnumEntryPtr ptrAcquisitionModeContinuous = ptrAcquisitionMode->GetEntryByName("Continuous");
+        if (!IsAvailable(ptrAcquisitionModeContinuous) || !IsReadable(ptrAcquisitionModeContinuous))
+        {
+            throw std::runtime_error("Unable to set acquisition mode to 'continuous'. Aborting...");
+        }
+
+        // Retrieve integer value from entry node
+        const int64_t acquisitionModeContinuous = ptrAcquisitionModeContinuous->GetValue();
+
+        // Set integer value from entry node as new value of enumeration node
+        ptrAcquisitionMode->SetIntValue(acquisitionModeContinuous);
+    }
+
+    acquiring = true;
+    pCam->BeginAcquisition();
+  }
+}
+
+void PitCamera::stop_acquisition() {
+  if( acquiring ) {
+    acquiring = false;
+    pCam->EndAcquisition();
+  }
 }
 
 PitCamera::~PitCamera() {
+    // Stop acquiring images!
+    stop_acquisition();
     // Deinitialize the camera.
     pCam->DeInit();
 
@@ -93,16 +140,18 @@ int PitCamera::get_autoexposure() {
     // Enable auto exposure and capture images to allow it to converge.
     use_autoexposure();
 
+    start_acquisition();
+
     // Iterate 5-20 times or until the exposure converges within 5%.
     // NOTE(Jordan): I have to force at least five
     // image captures to get the camera to reliably change exposures.
     int last_exposure = -1;
-    fmt::print("INIT EXPOSURE: {}\n", get_exposure());
-    for(int i=0; i<10; ++i) {
+    int last_last_exposure = -1;
+    for(int i=0; i<30; ++i) {
         capture(0);
         int exposure = get_exposure();
-        fmt::print("EXPOSURE: {}\n", exposure);
-        if(last_exposure > 0 && std::abs(exposure-last_exposure) < 0.05*exposure) {
+        fmt::print("AUTOEXPOSURE [{}]: {}\n", i, exposure);
+        if(last_last_exposure > 0 && last_exposure > 0 && std::abs(exposure-last_last_exposure) < 0.1*exposure) {
           break;
         }
         // Quit trying when it's super dark outside.
@@ -110,10 +159,13 @@ int PitCamera::get_autoexposure() {
         if( exposure > 2e6 ) {
           break;
         }
+        last_last_exposure = last_exposure;
         last_exposure = exposure;
     }
     // Save the calculated auto exposure.
     int autoexposure = get_exposure();
+
+    stop_acquisition();
 
     // Reset to original exposure.
     use_manual_exposure();
@@ -180,6 +232,7 @@ int PitCamera::get_exposure() {
 }
 
 void PitCamera::set_exposure(int exposure_us) {
+    stop_acquisition();
     use_manual_exposure();
 
     int exp_min = get_min_exposure();
@@ -191,6 +244,7 @@ void PitCamera::set_exposure(int exposure_us) {
         throw std::runtime_error("Unable to retrieve ExposureTime node.");
     }
     ptrExposureTime->SetValue(exposure_us);
+    start_acquisition();
 }
 
 void PitCamera::set_gain(double gain) {
@@ -226,34 +280,17 @@ void PitCamera::set_white_balance() {
   }
 }
 
-PitCamera::ImageRGB
-PitCamera::capture(int exposure_us) {
+PitCamera::ImageRGB PitCamera::capture(int exposure_us) {
     if (exposure_us > 0) {
-        set_exposure(exposure_us);
+        auto current_exposure = get_exposure();
+        if (std::abs(current_exposure-exposure_us) > 50) {
+          set_exposure(exposure_us);
+        }
     }
 
-    // Retrieve the GenICam nodemap.
-    auto &nodeMap = pCam->GetNodeMap();
+    start_acquisition();
 
-    // Retrieve enumeration node from nodemap
-    CEnumerationPtr ptrAcquisitionMode = nodeMap.GetNode("AcquisitionMode");
-    if (!IsAvailable(ptrAcquisitionMode) || !IsWritable(ptrAcquisitionMode))
-    {
-        throw std::runtime_error("Unable to set acquisition mode to 'continuous'. Aborting...");
-    }
-
-    // Retrieve entry node from enumeration node
-    CEnumEntryPtr ptrAcquisitionModeContinuous = ptrAcquisitionMode->GetEntryByName("Continuous");
-    if (!IsAvailable(ptrAcquisitionModeContinuous) || !IsReadable(ptrAcquisitionModeContinuous))
-    {
-        throw std::runtime_error("Unable to set acquisition mode to 'continuous'. Aborting...");
-    }
-
-    // Retrieve integer value from entry node
-    const int64_t acquisitionModeContinuous = ptrAcquisitionModeContinuous->GetValue();
-
-    // Set integer value from entry node as new value of enumeration node
-    ptrAcquisitionMode->SetIntValue(acquisitionModeContinuous);
+    ImageRGB image;
 
     int retry;
     const int num_retries = 10;
@@ -261,47 +298,45 @@ PitCamera::capture(int exposure_us) {
       if(retry > 0) {
         fmt::print("Image Capture Retry #{}\n", retry);
       }
- 
-      pCam->BeginAcquisition();
-        // Retrieve next received image
-        ImagePtr pResultImage = pCam->GetNextImage();
+      // Retrieve next received image
+      ImagePtr pResultImage = pCam->GetNextImage();
 
-        // Ensure image completion
-        if (pResultImage->IsIncomplete()) {
-            pResultImage->Release();
-            pCam->EndAcquisition();
-        } else {
-            // Convert to RGB8 (if the image is not RGB8 already)
-            ImagePtr pImageRGB = pResultImage->Convert(PixelFormat_RGB8);
+      // Ensure image completion
+      if (pResultImage->IsIncomplete()) {
+          fmt::print("INCOMPLETE IMAGE STATUS: {}\n",
+                Image::GetImageStatusDescription(pResultImage->GetImageStatus()));
+          pResultImage->Release();
+      } else {
+          // Convert to RGB8 (if the image is not RGB8 already)
+          ImagePtr pImageRGB = pResultImage->Convert(PixelFormat_RGB8);
 
-            // Convert Spinnaker::Image to ImageRGB
-            const size_t width = pImageRGB->GetWidth();
-            const size_t height = pImageRGB->GetHeight();
-            const size_t channels = pImageRGB->GetNumChannels();
-            const uint8_t* img_data = static_cast<const uint8_t*>(pImageRGB->GetData());
+          // Convert Spinnaker::Image to ImageRGB
+          const size_t width = pImageRGB->GetWidth();
+          const size_t height = pImageRGB->GetHeight();
+          const size_t channels = pImageRGB->GetNumChannels();
+          const uint8_t* img_data = static_cast<const uint8_t*>(pImageRGB->GetData());
 
-            if( pImageRGB->GetXPadding() != 0 || pImageRGB->GetYPadding() != 0 ) {
-                std::runtime_error("PitCam image has unexpected nonzero padding.");
-            }
+          if( pImageRGB->GetXPadding() != 0 || pImageRGB->GetYPadding() != 0 ) {
+              std::runtime_error("PitCam image has unexpected nonzero padding.");
+          }
 
-            // Copy the image data into our own image format.
-            PitCamera::ImageRGB image;
-            image.cols = width;
-            image.rows = height;
-            image.data.resize(width*height*channels);
+          // Copy the image data into our own image format.
+          image.cols = width;
+          image.rows = height;
+          image.data.resize(width*height*channels);
+          std::memcpy(&image.data[0], img_data, channels*width*height);
 
-            std::memcpy(&image.data[0], img_data, channels*width*height);
-
-            pResultImage->Release();
-            pCam->EndAcquisition();
-
-            return image;
-        }
+          pResultImage->Release();
+          break;
+      }
     }
 
-    // If we used all our retries, throw an exception.
-    auto msg = fmt::format("PitCam failed to capture a complete image after {} attempts.", num_retries);
-    throw std::runtime_error(msg);
+    if( retry >= num_retries ) {
+      // If we used all our retries, throw an exception.
+      auto msg = fmt::format("PitCam failed to capture a complete image after {} attempts.", num_retries);
+      throw std::runtime_error(msg);
+    }
+    return image;
 }
 
 void PitCamera::use_autoexposure() {

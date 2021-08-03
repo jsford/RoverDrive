@@ -37,6 +37,10 @@ class PitCamera {
         Spinnaker::SystemPtr  pSystem = nullptr;
         Spinnaker::CameraPtr     pCam = nullptr;
         Spinnaker::CameraList           camList;
+        bool acquiring = false;
+
+        void start_acquisition();
+        void stop_acquisition();
 
         // Set the camera exposure [us].
         void set_exposure(int exposure_us);
