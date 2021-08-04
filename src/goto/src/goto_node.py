@@ -12,6 +12,9 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from PIL import Image
 import piexif
+import nav
+
+BRINK_LIMIT_M = 0.3
 
 class RobotExecutive:
   def __init__(self):
@@ -34,6 +37,9 @@ class RobotExecutive:
     self.brink_range = None
     self.brink_sub = rospy.Subscriber('/brink/out/range', Float64, self.brink_callback)
     self.wait_for_brink()
+
+    # Publish motor commands.
+    self.twist_pub = rospy.Publisher('/teleop/out/twist_cmd', Twist, queue_size=10)
 
   def is_initialized(self):
       return (self.image_path != None and self.image_exposures != None and \
@@ -74,24 +80,51 @@ class RobotExecutive:
     _,_,yaw = euler_from_quaternion(q)
     self.state = np.array([x, y, yaw])
 
-  def wait_for_odom(self):
-    if self.state is None:
-      time.sleep(0.1)
-
   def brink_callback(self, msg):
     self.brink_range = msg.data
 
+  def wait_for_odom(self):
+    while self.state is None:
+      time.sleep(0.1)
+
   def wait_for_brink(self):
-    if self.brink_range is None:
+    while self.brink_range is None:
       time.sleep(0.1)
 
   def goto_absolute(self, goal_x, goal_y, goal_h, brink_en):
-    time.sleep(1.0)
-    pass
+    at_the_goal = False
+
+    print("ABS ({:3f},{:3f}@{:3f}".format(goal_x, goal_y, goal_h*180/np.pi))
+
+    while(at_the_goal == False):
+      if((brink_en and self.brink_range < BRINK_LIMIT_M) or rospy.is_shutdown()):
+        self.twist_pub.publish(Twist())
+        break
+
+      p0 = nav.Pose(self.state[0], self.state[1], self.state[2])
+      p1 = nav.Pose(goal_x, goal_y, goal_h*np.pi/180.0)
+      twist, at_the_goal = nav.get_twist(p0, p1)
+
+      msg = Twist()
+      msg.linear.x = twist[0]
+      msg.linear.y = 0.0
+      msg.linear.z = 0.0
+      msg.angular.x = 0.0
+      msg.angular.y = 0.0
+      msg.angular.z = twist[1]
+      self.twist_pub.publish(msg)
+      time.sleep(0.05)
 
   def goto_relative(self, goal_x, goal_y, goal_h, brink_en):
-    new_x = self.state[0] + goal_x
-    new_y = self.state[1] + goal_y
+    # Rotate the relative vector from the robot frame to the ENU frame centered on the robot.
+    vec = np.array([goal_x, goal_y])
+    c = np.cos(self.state[2]); s = np.sin(self.state[2]);
+    M = np.array([[c,-s],[s,c]])
+    vec = M.dot(vec)
+
+    # Translate the vector into the world frame.
+    new_x = self.state[0] + vec[0]
+    new_y = self.state[1] + vec[1]
     new_h = self.state[2] + goal_h
     return self.goto_absolute(new_x, new_y, new_h, brink_en)
 
@@ -171,15 +204,16 @@ if __name__=="__main__":
       if rospy.is_shutdown():
         break
 
+      # Skip comment lines.
+      comment_idx = command.find('#')
+      if comment_idx != -1:
+        command = command[0:comment_idx]
+
       command = command.strip().split(' ')
       command = [c.strip(',"') for c in command if c != '']
 
       # Skip blank lines.
       if len(command) == 0:
-        continue
-
-      # Skip comment lines.
-      if command[0][0] == '#':
         continue
 
       # Set image path.
