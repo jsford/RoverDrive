@@ -123,6 +123,10 @@ class Brinkmanship:
         f.set_leaf_size(self.filter_size[0], self.filter_size[1], self.filter_size[2])
         pcl_pts = f.filter()
 
+        # Give up if the point cloud is empty
+        if pcl_pts.size < 10:
+          return
+
         # RANSAC fit a plane
         seg = pcl_pts.make_segmenter_normals(ksearch=50)
         seg.set_optimize_coefficients(True)

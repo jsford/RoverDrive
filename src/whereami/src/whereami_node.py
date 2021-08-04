@@ -14,6 +14,7 @@ from tf.transformations import quaternion_from_euler, euler_from_quaternion
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, TransformStamped
+import progressbar
 import collections
 import time
 
@@ -50,10 +51,12 @@ class WhereAmINode:
     # Drive backwards.
     self._drive_then_stop(-0.10, 5.0)
     # Find out where you are.
+    print("Computing GPS Position")
     start_pos = self._sit_still_and_find_yourself()
     # Drive forwards.
     self._drive_then_stop(0.10, 5.0)
     # Find out where you are now.
+    print("Computing GPS Position")
     stop_pos = self._sit_still_and_find_yourself()
     # Compute initial yaw.
     dpos = stop_pos - start_pos
@@ -77,9 +80,11 @@ class WhereAmINode:
 
   def _sit_still_and_find_yourself(self):
     self.gps_fifo.clear()
-    while len(self.gps_fifo) < 100:
-      print(len(self.gps_fifo))
-      time.sleep(0.1)
+
+    with progressbar.ProgressBar(max_value=100) as bar:
+      while len(self.gps_fifo) < 100:
+        bar.update(len(self.gps_fifo))
+        time.sleep(0.1)
     positions = np.array(self.gps_fifo)
     return np.mean(positions, axis=0)
 

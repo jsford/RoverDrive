@@ -28,6 +28,15 @@ class Pose:
 
 def get_twist(current_pose, goal_pose):
   vec_to_goal = goal_pose.xy-current_pose.xy
+  direction = +1.0
+
+  heading_vec = np.array([np.cos(current_pose.h), np.sin(current_pose.h)])
+  if np.dot(vec_to_goal, heading_vec) < 0.0:
+    print("FUCK IT! WE'LL DO IT BACKWARD!")
+    direction = -1.0
+    current_pose.h += np.pi
+    goal_pose.h += np.pi
+
   angle_to_goal = np.arctan2(vec_to_goal[1], vec_to_goal[0])
   dist_to_goal = np.linalg.norm(vec_to_goal)
 
@@ -44,7 +53,7 @@ def get_twist(current_pose, goal_pose):
     if abs(phi) > goal_pose.dh:
       # Reorient
       print("REORIENT")
-      return [0.0, 0.1*np.sign(phi)], False
+      return [0.0, direction*0.1*np.sign(phi)], False
     else:
       # Done!
       print("DONE")
@@ -52,11 +61,11 @@ def get_twist(current_pose, goal_pose):
   elif abs(theta) > deg2rad(5):
     # Orient
     print("ORIENT")
-    return [0.0, 0.1*np.sign(theta)], False
+    return [0.0, direction*0.1*np.sign(theta)], False
   else:
     # Drive an arc.
     ROBOT_VELOCITY = 0.08
     R = dist_to_goal / (2*np.sin(theta))
     print("DRIVING")
-    return [ROBOT_VELOCITY, ROBOT_VELOCITY / R], False
+    return [direction*ROBOT_VELOCITY, direction*ROBOT_VELOCITY / R], False
   return [0.0, 0.0]

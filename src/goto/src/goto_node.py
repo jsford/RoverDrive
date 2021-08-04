@@ -15,6 +15,7 @@ import piexif
 import nav
 
 BRINK_LIMIT_M = 0.3
+ROBOT_VELOCITY = 0.08
 
 class RobotExecutive:
   def __init__(self):
@@ -31,15 +32,18 @@ class RobotExecutive:
     # Capture odom messages and use them to set the robot state.
     self.state = None
     self.odom_sub = rospy.Subscriber('/whereami/odom/', Odometry, self.odom_callback)
+    print("Waiting for odometry...")
     self.wait_for_odom()
 
     # Watch the brinkmanship range estimate to safeguard while driving.
     self.brink_range = None
     self.brink_sub = rospy.Subscriber('/brink/out/range', Float64, self.brink_callback)
+    print("Waiting for brinkmanship...")
     self.wait_for_brink()
 
     # Publish motor commands.
     self.twist_pub = rospy.Publisher('/teleop/out/twist_cmd', Twist, queue_size=10)
+    print("HERE WE GO!")
 
   def is_initialized(self):
       return (self.image_path != None and self.image_exposures != None and \
@@ -91,28 +95,59 @@ class RobotExecutive:
     while self.brink_range is None:
       time.sleep(0.1)
 
-  def goto_absolute(self, goal_x, goal_y, goal_h, brink_en):
-    at_the_goal = False
-
-    print("ABS ({:3f},{:3f}@{:3f}".format(goal_x, goal_y, goal_h*180/np.pi))
-
-    while(at_the_goal == False):
-      if((brink_en and self.brink_range < BRINK_LIMIT_M) or rospy.is_shutdown()):
-        self.twist_pub.publish(Twist())
-        break
-
+  def goto_absolute(self, goal_x, goal_y, goal_h, brink_en, dxy=0.5, dh=2.0*np.pi/180.0):
+    while(not rospy.is_shutdown()):
       p0 = nav.Pose(self.state[0], self.state[1], self.state[2])
-      p1 = nav.Pose(goal_x, goal_y, goal_h*np.pi/180.0)
-      twist, at_the_goal = nav.get_twist(p0, p1)
+      p1 = nav.Pose(goal_x, goal_y, goal_h)
+      g = p1.xy-p0.xy 
+      theta = np.arctan2(g[1],g[0])
 
-      msg = Twist()
-      msg.linear.x = twist[0]
-      msg.linear.y = 0.0
-      msg.linear.z = 0.0
-      msg.angular.x = 0.0
-      msg.angular.y = 0.0
-      msg.angular.z = twist[1]
-      self.twist_pub.publish(msg)
+      # If you are close enough to the goal...
+      if( np.linalg.norm(g) <= dxy ):
+        # REORIENT
+        print("REORIENT")
+        self.face(p1.h)
+        return
+      else:
+        dh_fwd = nav.subtract_angles(p0.h, theta)
+        dh_rev = nav.subtract_angles(p0.h+np.pi, theta)
+
+        # Should I drive forward? Or backward?
+        if abs(dh_fwd) < abs(dh_rev):
+          # Drive forward...
+          if abs(dh_fwd) > 10*np.pi/180.0:
+            # ORIENT
+            print("ORIENT FWD")
+            self.face(theta)
+          else:
+            # Stop if you are at the brink!
+            if(brink_en and self.brink_range < BRINK_LIMIT_M):
+              self.twist_pub.publish(Twist())
+              break
+
+            # DRIVE FWD
+            R = np.linalg.norm(g) / (2*np.sin(dh_fwd))
+            print("DRIVING FORWARD!")
+            msg = Twist()
+            msg.linear.x =  ROBOT_VELOCITY
+            msg.angular.z = ROBOT_VELOCITY / R
+            self.twist_pub.publish(msg)
+            print("DRIVE FWD")
+        else:
+          # Drive backward...
+          if abs(dh_rev) > 10*np.pi/180.0:
+            # ORIENT
+            print("ORIENT REV")
+            self.face(theta+np.pi)
+          else:
+            # DRIVE REV
+            R = np.linalg.norm(g) / (2*np.sin(dh_rev))
+            print("DRIVING BACKWARD!")
+            msg = Twist()
+            msg.linear.x = -ROBOT_VELOCITY
+            msg.angular.z = ROBOT_VELOCITY / R
+            self.twist_pub.publish(msg)
+            print("DRIVE REV")
       time.sleep(0.05)
 
   def goto_relative(self, goal_x, goal_y, goal_h, brink_en):
@@ -127,6 +162,23 @@ class RobotExecutive:
     new_y = self.state[1] + vec[1]
     new_h = self.state[2] + goal_h
     return self.goto_absolute(new_x, new_y, new_h, brink_en)
+
+  def face(self, goal_h):
+    # Rotate to face the right way.
+    while(not rospy.is_shutdown()):
+      dh = nav.subtract_angles(self.state[2], goal_h)
+      if abs(dh*180./np.pi) <= 1.0:
+        break
+      msg = Twist()
+      msg.angular.z = 0.1*np.sign(dh)
+      self.twist_pub.publish(msg)
+      time.sleep(0.1)
+    # Stop!
+    self.twist_pub.publish(Twist())
+
+  def point(self, point_x, point_y):
+    h = np.arctan2(point_y-self.state[1], point_x-self.state[0])
+    self.face(h)
 
   def _set_pan_tilt(self, p, t):
     rospy.wait_for_service('/pitcam/set_pan_tilt')
@@ -270,6 +322,19 @@ if __name__=="__main__":
         goal_h = np.pi/180.0 * float(command[3])
         brink_en = command[4] != 'BRINK_OFF'
         robot.goto_relative(goal_x, goal_y, goal_h, brink_en)
+        continue
+
+      # Turn in place.
+      if command[0] == 'FACE':
+        goal_h = np.pi/180.0 * float(command[1])
+        robot.face(goal_h)
+        continue
+
+      # Turn toward another position.
+      if command[0] == 'POINT':
+        goal_x = float(command[1])
+        goal_y = float(command[2])
+        robot.point(goal_x, goal_y)
         continue
 
       # Capture pitcam images.
