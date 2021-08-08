@@ -4,9 +4,9 @@ import cv2
 import numpy as np
 
 def hdr_merge(images, exposures, gamma=1.8):
-    '''Merge multiple exposure-bracketed images into a single tonemapped image.'''
-    # Remove gamma from the starting images.
-    # NOTE(Jordan): Pitcam applies a 1.8 gamma to its images.
+    '''Merge multiple exposure-bracketed images into a single tonemapped image.
+    Remove gamma from the images prior to registration.'''
+    # NOTE(Jordan): Pitcam applies a 1.8 gamma to its images. Remove it.
     images = [_adjust_gamma(im, gamma) for im in images]
     # Align the images and crop them to the overlapping region.
     images, exposures = _align_image_bracket(images, exposures)
@@ -14,6 +14,46 @@ def hdr_merge(images, exposures, gamma=1.8):
     hdr_image = _merge_images_mertens(images, exposures)
     return hdr_image
 
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
+
+class CachedSIFT:
+    '''This thing finds SIFT keypoints and descriptors.
+    It caches inputs to avoid re-SIFT-ing when possible.'''
+    def __init__(self, capacity):
+        self.sift = cv2.xfeatures2d.SIFT_create()
+        self.cache_keys = []
+        self.cache_vals = []
+        self.cache_capacity = capacity
+
+    def detect_and_compute(self, img):
+        # Use a hash of the image as a key for the cache.
+        key = self._image_hash(img)
+        if key in self.cache_keys:
+            # If the key is in the cache, return the corresponding value.
+            return self.cache_vals[self.cache_keys.index(key)]
+        else:
+            # Otherwise, compute the SIFT result,
+            res = self.sift.detectAndCompute(img, None)
+            # and add it to the cache.
+            self.cache_keys.append(key)
+            self.cache_vals.append(res)
+            # If the cache has exceeded its capacity, toss the oldest entry.
+            if len(self.cache_keys) > self.cache_capacity:
+                self.cache_keys = self.cache_keys[1:]
+                self.cache_vals = self.cache_vals[1:]
+            # Return the SIFT result.
+            return res
+
+    def _image_hash(self, img):
+        u = img.view('u' + str(img.itemsize))
+        return np.bitwise_xor.reduce(u.ravel())
+
+@static_vars(sift = CachedSIFT(2))
 def _align_images_sift(im1, im2):
   '''Align im1 to im2. Warp im1 to match im2.
   Return the warped im1 and the homography h that was used to warp it.'''
@@ -22,12 +62,9 @@ def _align_images_sift(im1, im2):
   im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
   im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
 
-  # Initiate SIFT detector
-  sift = cv2.xfeatures2d.SIFT_create()
-
   # find the keypoints and descriptors with SIFT
-  kp1, des1 = sift.detectAndCompute(im1Gray,None)
-  kp2, des2 = sift.detectAndCompute(im2Gray,None)
+  kp1, des1 = _align_images_sift.sift.detect_and_compute(im1Gray)
+  kp2, des2 = _align_images_sift.sift.detect_and_compute(im2Gray)
 
   # Matching descriptor vectors with a FLANN based matcher
   matcher = cv2.DescriptorMatcher_create(cv2.DescriptorMatcher_FLANNBASED)
